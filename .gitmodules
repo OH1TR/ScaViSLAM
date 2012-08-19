@@ -1,0 +1,3 @@
+[submodule "EXTERNAL/g2o"]
+	path = EXTERNAL/g2o
+	url = https://github.com/RainerKuemmerle/g2o.git
