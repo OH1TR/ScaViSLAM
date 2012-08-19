@@ -1,3 +1,6 @@
 [submodule "EXTERNAL/g2o"]
 	path = EXTERNAL/g2o
 	url = https://github.com/RainerKuemmerle/g2o.git
+[submodule "EXTERNAL/Pangolin"]
+	path = EXTERNAL/Pangolin
+	url = git://github.com/stevenlovegrove/Pangolin.git
