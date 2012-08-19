@@ -7,3 +7,6 @@
 [submodule "EXTERNAL/Sophus"]
 	path = EXTERNAL/Sophus
 	url = git://github.com/strasdat/Sophus.git
+[submodule "EXTERNAL/VisionTools"]
+	path = EXTERNAL/VisionTools
+	url = git://github.com/strasdat/VisionTools.git
