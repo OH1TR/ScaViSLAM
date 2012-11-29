@@ -88,6 +88,7 @@ IF(CUDA_SUPPORT)
   SET(CUDA_NVCC_FLAGS  "-arch=sm_20" "--use_fast_math" "-O3"
                        "--ptxas-options=--verbose" "-keep"  )
   ADD_DEFINITIONS(-DCUDA_BUILD -DBT_USE_DOUBLE_PRECISION)
+  LIST(APPEND INCLUDE_DIRS "${CUDA_SDK_ROOT_DIR}/common/inc")
 ENDIF()
 
 
