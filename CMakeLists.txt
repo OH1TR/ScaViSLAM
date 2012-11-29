@@ -5,9 +5,12 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
     "${PROJECT_SOURCE_DIR}/CMakeModules/")
 
-SET (OpenCV_DIR ${CMAKE_PREFIX_PATH}/share/OpenCV)
+#SET (OpenCV_DIR ${CMAKE_PREFIX_PATH}/share/OpenCV)
+SET (OpenCV_DIR /usr/local/share/OpenCV)
 
 SET (CMAKE_VERBOSE_MAKEFILE ON)
+
+SET(SSE4_1_SUPPORT ON)
 
 IF(NOT CUDA_SUPPORT)
   SET(CUDA_SUPPORT ON)
@@ -56,13 +59,22 @@ IF (CMAKE_COMPILER_IS_GNUCXX )
                    -Wno-unused-but-set-variable -Wno-unknown-pragmas")
 ENDIF()
 
-FIND_PACKAGE(OpenCV REQUIRED)
+FIND_PACKAGE(OpenCV 2.4.9 EXACT REQUIRED)
 FIND_PACKAGE(SuiteSparse REQUIRED)
 FIND_PACKAGE(Eigen3 REQUIRED)
-LIST(APPEND INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR} 
-                         ${CSPARSE_INCLUDE_DIR})
+LIST(APPEND INCLUDE_DIRS
+    ${EIGEN3_INCLUDE_DIR}
+    ${OpenCV_INCLUDE_DIRS}
+    ${CSPARSE_INCLUDE_DIR}
+    ${PROJECT_SOURCE_DIR}/EXTERNAL/VisionTools/
+    ${PROJECT_SOURCE_DIR}/EXTERNAL/include
+    )
 
-LIST(APPEND CMAKE_LIBRARY_PATH EXTERNAL/VisionTools/svs_build/)
+LIST(APPEND CMAKE_LIBRARY_PATH
+    ${OpenCV_LIB_DIR}
+    ${PROJECT_SOURCE_DIR}/EXTERNAL/VisionTools/build/
+    ${PROJECT_SOURCE_DIR}/EXTERNAL/lib
+    )
 
 SET (LIB_NAMES GL pangolin glut g2o_stuff g2o_core g2o_solver_csparse csparse
                g2o_csparse_extension  VisionTools Sophus
@@ -72,7 +84,6 @@ SET (LIB_NAMES GL pangolin glut g2o_stuff g2o_core g2o_solver_csparse csparse
                opencv_highgui opencv_imgproc opencv_calib3d)
 
 IF(CUDA_SUPPORT)
-  LIST(APPEND INCLUDE_DIRS "EXTERNAL/opencv2/modules/gpu/include")
   FIND_PACKAGE(CUDA REQUIRED)
   SET(CUDA_NVCC_FLAGS  "-arch=sm_20" "--use_fast_math" "-O3"
                        "--ptxas-options=--verbose" "-keep"  )
