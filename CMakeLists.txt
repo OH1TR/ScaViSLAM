@@ -1,7 +1,34 @@
-SET(PROJECT_NAME ScaViSLAM)
-
-PROJECT(${PROJECT_NAME})
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+
+# Set the build type.  Options are:
+#  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
+#  Debug          : w/ debug symbols, w/o optimization
+#  Release        : w/o debug symbols, w/ optimization
+#  RelWithDebInfo : w/ debug symbols, w/ optimization
+#  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
+#set(ROS_BUILD_TYPE RelWithDebInfo)
+
+rosbuild_init()
+
+#set the default path for built executables to the "bin" directory
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+#set the default path for built libraries to the "lib" directory
+set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+
+#uncomment if you have defined messages
+#rosbuild_genmsg()
+#uncomment if you have defined services
+#rosbuild_gensrv()
+
+#common commands for building c++ executables and libraries
+#rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
+#target_link_libraries(${PROJECT_NAME} another_library)
+#rosbuild_add_boost_directories()
+#rosbuild_link_boost(${PROJECT_NAME} thread)
+#rosbuild_add_executable(example examples/example.cpp)
+#target_link_libraries(example ${PROJECT_NAME})SET(PROJECT_NAME ScaViSLAM)
+
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
     "${PROJECT_SOURCE_DIR}/CMakeModules/")
 
@@ -55,8 +82,6 @@ IF (CMAKE_COMPILER_IS_GNUCXX )
     SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g")
     MESSAGE ("SSE 4.1  SUPPORT OFF")
   ENDIF()
-  ADD_DEFINITIONS("-Wall -Werror -Wno-unused-variable
-                   -Wno-unused-but-set-variable -Wno-unknown-pragmas")
 ENDIF()
 
 FIND_PACKAGE(OpenCV 2.4.9 EXACT REQUIRED)
@@ -89,6 +114,67 @@ IF(CUDA_SUPPORT)
                        "--ptxas-options=--verbose" "-keep"  )
   ADD_DEFINITIONS(-DCUDA_BUILD -DBT_USE_DOUBLE_PRECISION)
   LIST(APPEND INCLUDE_DIRS "${CUDA_SDK_ROOT_DIR}/common/inc")
+
+  macro(ROS_CUDA_ADD_LIBRARY cuda_target)
+
+      CUDA_ADD_CUDA_INCLUDE_ONCE()
+
+      # Separate the sources from the options
+      CUDA_GET_SOURCES_AND_OPTIONS(_sources _cmake_options _options ${ARGN})
+      CUDA_BUILD_SHARED_LIBRARY(_cuda_shared_flag ${ARGN})
+      # Create custom commands and targets for each file.
+      CUDA_WRAP_SRCS( ${cuda_target} OBJ _generated_files ${_sources}
+          ${_cmake_options} ${_cuda_shared_flag}
+          OPTIONS ${_options} )
+
+      # Add the library.
+      rosbuild_add_library(${cuda_target} ${_cmake_options}
+          ${_generated_files}
+          ${_sources}
+          )
+
+      target_link_libraries(${cuda_target}
+          ${CUDA_LIBRARIES}
+          )
+
+      # We need to set the linker language based on what the expected generated file
+      # would be. CUDA_C_OR_CXX is computed based on CUDA_HOST_COMPILATION_CPP.
+      set_target_properties(${cuda_target}
+          PROPERTIES
+          LINKER_LANGUAGE ${CUDA_C_OR_CXX}
+          )
+
+  endmacro(ROS_CUDA_ADD_LIBRARY cuda_target)
+
+  macro(ROS_CUDA_ADD_EXECUTABLE cuda_target)
+
+      CUDA_ADD_CUDA_INCLUDE_ONCE()
+
+      # Separate the sources from the options
+      CUDA_GET_SOURCES_AND_OPTIONS(_sources _cmake_options _options ${ARGN})
+      # Create custom commands and targets for each file.
+      CUDA_WRAP_SRCS( ${cuda_target} OBJ _generated_files ${_sources} OPTIONS ${_options} )
+
+      # Add the library.
+      rosbuild_add_executable(${cuda_target} ${_cmake_options}
+          ${_generated_files}
+          ${_sources}
+          )
+
+      rosbuild_add_compile_flags(${cuda_target} "-Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unknown-pragmas")
+      target_link_libraries(${cuda_target}
+          ${CUDA_LIBRARIES}
+          )
+
+      # We need to set the linker language based on what the expected generated file
+      # would be. CUDA_C_OR_CXX is computed based on CUDA_HOST_COMPILATION_CPP.
+      set_target_properties(${cuda_target}
+          PROPERTIES
+          LINKER_LANGUAGE ${CUDA_C_OR_CXX}
+          )
+
+  endmacro(ROS_CUDA_ADD_EXECUTABLE cuda_target)
+
 ENDIF()
 
 
@@ -122,13 +208,6 @@ SET (TEMPLATE ransac
               slam_graph )
 
 SET (SOURCE_DIR "scavislam")
-SET (SOURCES ${SOURCE_DIR}/draw_items.h
-             ${SOURCE_DIR}/global.h   
-             ${SOURCE_DIR}/keyframes.h
-             ${SOURCE_DIR}/quadtree.h
-             ${SOURCE_DIR}/transformations.h
-             ${SOURCE_DIR}/data_structures.h
-             ${SOURCE_DIR}/pose_optimizer.h)
 
 IF(PCL_SUPPORT)
   LIST(APPEND CLASSES rgbd_grabber)
@@ -141,29 +220,28 @@ ENDIF()
 
 
 FOREACH(class ${CLASSES})
-  LIST(APPEND SOURCES ${SOURCE_DIR}/${class}.cpp ${SOURCE_DIR}/${class}.h)
+  LIST(APPEND SOURCES ${SOURCE_DIR}/${class}.cpp)
 ENDFOREACH(class)
 
 FOREACH(template ${TEMPLATE})
-  LIST(APPEND SOURCES ${SOURCE_DIR}/${template}.cpp   
-                      ${SOURCE_DIR}/${template}.hpp
+  LIST(APPEND SOURCES ${SOURCE_DIR}/${template}.cpp
                       ${SOURCE_DIR}/${template}-impl.cpp )
 ENDFOREACH(template)
 
-LINK_DIRECTORIES(${LINK_DIRS} ${PCL_LIBRARY_DIRS})
+INCLUDE_DIRECTORIES(${INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
+LINK_DIRECTORIES(${LINK_DIRS} ${PCL_LIBRARY_DIRS} ${SOURCE_DIR})
 LINK_LIBRARIES (${PROJECT_NAME} ${LIBS} ${PCL_LIBRARIES})
 
 IF(CUDA_SUPPORT)
   LIST(APPEND INCLUDE_DIRS ${CUDA_SDK_ROOT_DIR}/common/inc ${CUDA_INCLUDE_DIRS})
-  CUDA_ADD_EXECUTABLE(stereo_slam ${SOURCE_DIR}/stereo_slam.cpp)
-  CUDA_ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCES})
+  ROS_CUDA_ADD_EXECUTABLE(stereo_slam ${SOURCE_DIR}/stereo_slam.cpp)
+  ROS_CUDA_ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCES})
 ELSE()
-  ADD_EXECUTABLE(stereo_slam ${SOURCE_DIR}/stereo_slam.cpp)
-  ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCES})
+  rosbuild_add_executable(stereo_slam ${SOURCE_DIR}/stereo_slam.cpp)
+  rosbuild_add_library(${PROJECT_NAME} SHARED ${SOURCES})
 ENDIF()
-ADD_EXECUTABLE(create_dictionary ${SOURCE_DIR}/create_dictionary.cpp)
+ROSBUILD_ADD_EXECUTABLE(create_dictionary ${SOURCE_DIR}/create_dictionary.cpp)
 IF(PCL_SUPPORT)
-  ADD_EXECUTABLE(dump_rgbd ${SOURCE_DIR}/dump_rgbd.cpp)
+    ROSBUILD_ADD_EXECUTABLE(dump_rgbd ${SOURCE_DIR}/dump_rgbd.cpp)
 ENDIF()
 
-INCLUDE_DIRECTORIES(${INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})

@@ -1,0 +1,14 @@
+<package>
+  <description brief="ScaViSLAM">
+
+     ScaViSLAM
+
+  </description>
+  <author></author>
+  <license>LGPL</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ScaViSLAM</url>
+
+</package>
+
+
