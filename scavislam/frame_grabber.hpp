@@ -28,6 +28,8 @@
 #include <opencv2/gpu/gpu.hpp>
 #endif
 
+#include "framedata.hpp"
+
 #include "filegrabber.h"
 
 #ifdef SCAVISLAM_PCL_SUPPORT
@@ -48,112 +50,6 @@ namespace ScaViSLAM
 using namespace std;
 using namespace Eigen;
 using namespace VisionTools;
-
-struct ImageSet
-{
-public:
-  ImageSet(){}
-  ImageSet(const cv::Mat & img)
-    : uint8(img),
-      pyr_uint8(NUM_PYR_LEVELS)
-  #ifdef SCAVISLAM_CUDA_SUPPORT
-    , gpu_pyr_float32(NUM_PYR_LEVELS)
-  #endif
-  {
-  }
-
-  void
-  clone(ImageSet & new_set)
-  {
-    new_set.uint8 = uint8.clone();
-    for (int l = 0; l<NUM_PYR_LEVELS; ++l)
-    {
-      new_set.pyr_uint8[l] = pyr_uint8[l].clone();
-    }
-
-#ifdef SCAVISLAM_CUDA_SUPPORT
-    new_set.gpu_uint8 = gpu_uint8.clone();
-    for (int l = 0; l<NUM_PYR_LEVELS; ++l)
-    {
-      new_set.gpu_pyr_float32[l] = gpu_pyr_float32[l].clone();
-    }
-#endif
-  }
-
-  cv::Mat color_uint8;
-  cv::Mat uint8;
-  vector<cv::Mat> pyr_uint8;
-#ifdef SCAVISLAM_CUDA_SUPPORT
-  cv::gpu::GpuMat gpu_uint8;
-  vector<cv::gpu::GpuMat> gpu_pyr_float32;
-#endif
-};
-
-
-template <class Camera>
-class FrameData
-{
-public:
-  FrameData()
-    :
-    #ifdef SCAVISLAM_CUDA_SUPPORT
-      gpu_pyr_float32_dx(NUM_PYR_LEVELS),
-      gpu_pyr_float32_dy(NUM_PYR_LEVELS),
-    #endif
-      have_disp_img(false),
-      offset(0)
-  {}
-
-  ImageSet& cur_left()
-  {
-    return left[offset];
-  }
-
-  ImageSet& prev_left()
-  {
-    return left[(offset+1)%2];
-  }
-
-  const ImageSet& cur_left() const
-  {
-    return left[offset];
-  }
-
-  const ImageSet& prev_left() const
-  {
-    return left[(offset+1)%2];
-  }
-
-  void nextFrame()
-  {
-    offset = (offset+1)%2;
-  }
-
-  Camera cam;
-  typename ALIGNED<Camera>::vector cam_vec;
-  ImageSet left[2];
-  ImageSet right;
-
-  cv::Mat disp;
-  cv::Mat color_disp;
-#ifdef SCAVISLAM_CUDA_SUPPORT
-  cv::gpu::GpuMat gpu_disp_32f;
-  cv::gpu::GpuMat gpu_xyzw;
-  cv::gpu::GpuMat gpu_disp_16s;
-  cv::gpu::GpuMat gpu_color_disp;
-  vector<cv::gpu::GpuMat> gpu_pyr_float32_dx;
-  vector<cv::gpu::GpuMat> gpu_pyr_float32_dy;
-#else
-  vector<cv::Mat> pyr_float32;
-  vector<cv::Mat> pyr_float32_dx;
-  vector<cv::Mat> pyr_float32_dy;
-#endif
-  int frame_id;
-  bool have_disp_img;
-private:
-  int offset;
-};
-
 
 template<class Camera>
 class FrameGrabber

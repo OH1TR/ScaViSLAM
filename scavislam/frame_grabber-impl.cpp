@@ -33,30 +33,11 @@ FrameGrabber(const StereoCamera & cam,
              const Vector4d & cam_dist,
              PerformanceMonitor * per_mon)
   :
+    frame_data(cam),
     per_mon_(per_mon),
     cam_distortion_(cam_dist),
     size_factor_(1./cam.image_size().area())
 {
-  frame_data.cur_left()
-      = ImageSet(cv::Mat(cam.image_size(),CV_8UC1));
-  frame_data.prev_left()
-      = ImageSet(cv::Mat(cam.image_size(),CV_8UC1));
-  frame_data.right =
-      ImageSet(cv::Mat(cam.image_size(),CV_8UC1));
-  frame_data.cam
-      = cam;
-  frame_data.cam_vec
-      = ALIGNED<StereoCamera>::vector(NUM_PYR_LEVELS);
-  for (int level = 0; level<NUM_PYR_LEVELS; ++level)
-  {
-
-    frame_data.cam_vec.at(level)
-        = StereoCamera(pyrFromZero_d(cam.focal_length(),level),
-                       pyrFromZero_2d(cam.principal_point(),level),
-                       cv::Size(pyrFromZero_d(cam.image_size().width,level),
-                                pyrFromZero_d(cam.image_size().height,level)),
-                       cam.baseline()*(1<<level));
-  }
 }
 
 template <>
@@ -65,6 +46,7 @@ FrameGrabber(const LinearCamera & cam,
              const Vector4d & cam_dist,
              PerformanceMonitor * per_mon)
   :
+    frame_data(cam),
     per_mon_(per_mon),
     cam_distortion_(cam_dist),
     size_factor_(1./cam.image_size().area())
