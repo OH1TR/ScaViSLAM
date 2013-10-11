@@ -40,14 +40,7 @@ find_package(GLUT REQUIRED)
 set(G2O_ROOT /opt/ros/groovy)
 find_package(G2O REQUIRED)
 
-# dynamic reconfigure
-generate_dynamic_reconfigure_options(
-    cfg/stereo_vslam_node.cfg
-)
-
 catkin_package(
-    CATKIN_DEPENDS
-        dynamic_reconfigure
 )
 
 ADD_DEFINITIONS(-DCUDA_BUILD -DBT_USE_DOUBLE_PRECISION -DSCAVISLAM_CUDA_SUPPORT)
