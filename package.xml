@@ -1,0 +1,30 @@
+<package>
+    <name>ScaViSLAM</name>
+    <version>0.0.1</version>
+    <description>
+
+        ScaViSLAM
+
+    </description>
+    <author>Hauke Strasdat</author>
+    <maintainer email="contradict@gmail.com">contradict</maintainer>
+    <license>LGPL</license>
+    <url>https://github.com/contradict/ScaViSLAM</url>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <build_depend>Pangolin</build_depend>
+    <build_depend>VisionTools</build_depend>
+    <build_depend>Sophus</build_depend>
+    <build_depend>libg2o</build_depend>
+    <build_depend>dynamic_reconfigure</build_depend>
+
+    <run_depend>Pangolin</run_depend>
+    <run_depend>VisionTools</run_depend>
+    <run_depend>Sophus</run_depend>
+    <run_depend>libg2o</run_depend>
+    <run_depend>dynamic_reconfigure</run_depend>
+
+</package>
+
+
