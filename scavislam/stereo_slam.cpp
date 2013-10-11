@@ -142,8 +142,8 @@ initializeViews(const StereoCamera & stereo_camera)
       = PyramidView::init(NUM_PYR_LEVELS,
                           1.0,0.5,0.8,1.,
                           "key");
-  views.pangolin_cam.Set(stereo_camera.getOpenGlMatrixSpec());
-  views.pangolin_cam.Set(pangolin::IdentityMatrix(pangolin::GlModelViewStack));
+  views.pangolin_cam.SetProjectionMatrix(stereo_camera.getOpenGlMatrixSpec());
+  views.pangolin_cam.SetModelViewMatrix(pangolin::IdentityMatrix(pangolin::GlModelViewStack));
 
   views.v3d = &(pangolin::Display("view3d")
                 .SetBounds(0.5,0.0,0.6,1.0,true)
@@ -222,7 +222,7 @@ void draw(int loop_id,
 {
   modules->per_mon->start("drawing");
   GLUquadric * quad = gluNewQuadric();
-  SE3 T_actkey_from_world;
+  SE3d T_actkey_from_world;
   if (IS_IN_SET(modules->frontend->actkey_id,
                 modules->frontend->neighborhood()->vertex_map))
   {
@@ -439,7 +439,7 @@ void draw(int loop_id,
       }
     }
   }
-  SE3 T_cur_from_world
+  SE3d T_cur_from_world
       = modules->frontend->T_cur_from_actkey()*T_actkey_from_world;
   const pangolin::OpenGlMatrix & gl_projection =
        views->pangolin_cam.GetProjectionMatrix();
@@ -479,14 +479,14 @@ void draw(int loop_id,
          it=modules->frontend->neighborhood()->vertex_map.begin();
          it!=modules->frontend->neighborhood()->vertex_map.end(); ++it)
     {
-      SE3 T1 = it->second.T_me_from_w.inverse();
+      SE3d T1 = it->second.T_me_from_w.inverse();
       Draw3d::pose(T1);
 
       for (multimap<int,int>::const_iterator it2 =
            it->second.strength_to_neighbors.begin();
            it2 != it->second.strength_to_neighbors.end(); ++it2)
       {
-        SE3 T2 = GET_MAP_ELEM(it2->second,
+        SE3d T2 = GET_MAP_ELEM(it2->second,
                               modules->frontend->neighborhood()->vertex_map)
             .T_me_from_w.inverse();
         Draw3d::line(T1.translation(), T2.translation());
@@ -509,9 +509,9 @@ void draw(int loop_id,
       if(IS_IN_SET(id1,graph_draw_data->double_window)==false
          || IS_IN_SET(id2,graph_draw_data->double_window)==false)
         continue;
-      SE3 T_c1_from_w
+      SE3d T_c1_from_w
           = GET_MAP_ELEM(id1,graph_draw_data->vertex_table).T_me_from_world;
-      SE3 T_c2_from_w
+      SE3d T_c2_from_w
           = GET_MAP_ELEM(id2,graph_draw_data->vertex_table).T_me_from_world;
 
       Draw3d::line(T_c1_from_w.inverse().translation(),
@@ -537,9 +537,9 @@ void draw(int loop_id,
       if(IS_IN_SET(id1,graph_draw_data->double_window)==false
          || IS_IN_SET(id2,graph_draw_data->double_window)==false)
         continue;
-      SE3 T_c1_from_w
+      SE3d T_c1_from_w
           = GET_MAP_ELEM(id1,graph_draw_data->vertex_table).T_me_from_world;
-      SE3 T_c2_from_w
+      SE3d T_c2_from_w
           = GET_MAP_ELEM(id2,graph_draw_data->vertex_table).T_me_from_world;
 
       Draw3d::line(T_c1_from_w.inverse().translation(),
@@ -598,7 +598,7 @@ void draw(int loop_id,
           T_actkey_from_world.inverse());
   }
   glColor3f(0,0,1);
-  SE3 T_world_from_cur = (modules->frontend->T_cur_from_actkey() *
+  SE3d T_world_from_cur = (modules->frontend->T_cur_from_actkey() *
                           T_actkey_from_world
                           ).inverse();
   Draw3d::pose(T_world_from_cur,0.25);
@@ -618,7 +618,7 @@ void draw(int loop_id,
       const StereoGraph::Point & p
           = GET_MAP_ELEM(point_id, graph_draw_data->point_table);
 
-      SE3 T_world_from_anchor
+      SE3d T_world_from_anchor
           = GET_MAP_ELEM(p.anchorframe_id, graph_draw_data->vertex_table)
           .T_me_from_world.inverse();
 

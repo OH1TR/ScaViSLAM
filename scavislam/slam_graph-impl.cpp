@@ -26,8 +26,8 @@ namespace ScaViSLAM
 {
 
 template<>
-void SlamGraph<SE3,StereoCamera, SE3XYZ_STEREO, 3>
-::addPoseToG2o(const SE3 & T_me_from_w,
+void SlamGraph<SE3d,StereoCamera, SE3XYZ_STEREO, 3>
+::addPoseToG2o(const SE3d & T_me_from_w,
                int pose_id,
                bool fixed,
                g2o::SparseOptimizer * optimizer)
@@ -42,7 +42,7 @@ void SlamGraph<SE3,StereoCamera, SE3XYZ_STEREO, 3>
 }
 
 template <>
-void SlamGraph<SE3,StereoCamera, SE3XYZ_STEREO, 3>
+void SlamGraph<SE3d,StereoCamera, SE3XYZ_STEREO, 3>
 ::addObsToG2o(const Vector3d & obs,
               const Matrix3d & Lambda,
               int g2o_point_id,
@@ -97,8 +97,8 @@ void SlamGraph<SE3,StereoCamera, SE3XYZ_STEREO, 3>
 }
 
 template <>
-void SlamGraph<SE3,StereoCamera, SE3XYZ_STEREO, 3>
-::addConstraintToG2o(const SE3 & T_2_from_1,
+void SlamGraph<SE3d,StereoCamera, SE3XYZ_STEREO, 3>
+::addConstraintToG2o(const SE3d & T_2_from_1,
                      const Matrix6d &
                      Lambda_2_from_1,
                      int pose_id_1,
@@ -127,8 +127,8 @@ void SlamGraph<SE3,StereoCamera, SE3XYZ_STEREO, 3>
 
 #ifdef MONO
 template<>
-void SlamGraph<Sim3,LinearCamera, Sim3XYZ, 2>
-::addPoseToG2o(const Sim3 & T_me_from_w,
+void SlamGraph<Sim3d,LinearCamera, Sim3XYZ, 2>
+::addPoseToG2o(const Sim3d & T_me_from_w,
                int pose_id,
                bool fixed,
                g2o::SparseOptimizer * optimizer)
@@ -148,7 +148,7 @@ void SlamGraph<Sim3,LinearCamera, Sim3XYZ, 2>
 
 
 template <>
-void SlamGraph<Sim3,LinearCamera, Sim3XYZ, 2>
+void SlamGraph<Sim3d,LinearCamera, Sim3XYZ, 2>
 ::addObsToG2o(const Vector2d & obs,
               const Matrix2d & Lambda,
               int g2o_point_id,
@@ -198,8 +198,8 @@ void SlamGraph<Sim3,LinearCamera, Sim3XYZ, 2>
 
 
 template <>
-void SlamGraph<Sim3, LinearCamera, Sim3XYZ, 2>
-::addConstraintToG2o(const Sim3 & T_2_from_1,
+void SlamGraph<Sim3d, LinearCamera, Sim3XYZ, 2>
+::addConstraintToG2o(const Sim3d & T_2_from_1,
                      const Matrix6d & Lambda_2_from_1,
                      int pose_id_1,
                      int pose_id_2,
@@ -229,16 +229,16 @@ namespace SlamGraphMethods
 {
 template <>
 bool
-restorePoseFromG2o<Sim3, LinearCamera, Sim3XYZ, 2>
+restorePoseFromG2o<Sim3d, LinearCamera, Sim3XYZ, 2>
 (const g2o::HyperGraph::Vertex * g2o_vertex,
- SlamGraph<Sim3, LinearCamera, Sim3XYZ, 2>::VertexTable * vertex_map)
+ SlamGraph<Sim3d, LinearCamera, Sim3XYZ, 2>::VertexTable * vertex_map)
 {
   const G2oVertexSim3 * v_sim3
       = dynamic_cast<const G2oVertexSim3*>(g2o_vertex);
   if (v_sim3!=NULL)
   {
     int frame_id = v_sim3->id();
-    SlamGraph<Sim3, LinearCamera, Sim3XYZ, 2>::Vertex &
+    SlamGraph<Sim3d, LinearCamera, Sim3XYZ, 2>::Vertex &
         frame_vertex = GET_MAP_ELEM_REF(frame_id, vertex_map);
     frame_vertex.T_me_from_world = v_sim3->estimate();
     return true;
@@ -248,9 +248,9 @@ restorePoseFromG2o<Sim3, LinearCamera, Sim3XYZ, 2>
 }
 #endif
 
-template class SlamGraph<SE3,StereoCamera,SE3XYZ_STEREO,3>;
+template class SlamGraph<SE3d,StereoCamera,SE3XYZ_STEREO,3>;
 #ifdef MONO
-template class SlamGraph<Sim3,LinearCamera,Sim3XYZ,2>;
+template class SlamGraph<Sim3d,LinearCamera,Sim3XYZ,2>;
 #endif
 
 

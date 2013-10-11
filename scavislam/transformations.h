@@ -20,7 +20,7 @@
 
 #include <list>
 
-#include <sophus/se3.h>
+#include <sophus/se3.hpp>
 #ifdef MONO
 #include <sophus/sim3.h>
 #endif
@@ -80,9 +80,9 @@ d_expy_d_y(const Vector3d & y)
 }
 
 inline Matrix3d
-d_Tinvpsi_d_psi(const SE3 & T, const Vector3d & psi)
+d_Tinvpsi_d_psi(const SE3d & T, const Vector3d & psi)
 {
-  Matrix3d R = T.rotation_matrix();
+  Matrix3d R = T.rotationMatrix();
   Vector3d x = invert_depth(psi);
   Vector3d r1 = R.col(0);
   Vector3d r2 = R.col(1);
@@ -402,12 +402,12 @@ public:
 template <int PointParNum, int PointDoF, int ObsDim>
 class SE3_AbstractPoint
     : public AbstractPrediction
-    <SE3,6,Matrix<double, PointParNum,1>,PointDoF,ObsDim>
+    <SE3d,6,Matrix<double, PointParNum,1>,PointDoF,ObsDim>
 {
 public:
-  SE3 add(const SE3 &T, const Matrix<double,6,1> & delta) const
+  SE3d add(const SE3d &T, const Matrix<double,6,1> & delta) const
   {
-    return SE3::exp(delta)*T;
+    return SE3d::exp(delta)*T;
   }
 };
 
@@ -422,7 +422,7 @@ public:
   }
 
   Matrix<double,3,6>
-  frameJac(const SE3 & se3,
+  frameJac(const SE3d & se3,
            const Vector3d & xyz)const
   {
     const Vector3d & xyz_trans = se3*xyz;
@@ -446,7 +446,7 @@ public:
     return jac;
   }
 
-  Vector3d map(const SE3 & T,
+  Vector3d map(const SE3d & T,
                const Vector3d& xyz) const
   {
     return _cam.map_uvu(T*xyz);
@@ -572,7 +572,7 @@ public:
     this->cam = cam;
   }
 
-  inline Vector2d map(const SE3 & T,
+  inline Vector2d map(const SE3d & T,
                       const Vector3d& x) const
   {
     return cam.map(project2d(T*x));
@@ -602,7 +602,7 @@ public:
     this->cam = cam_pars;
   }
 
-  inline Vector2d map(const SE3 & T,
+  inline Vector2d map(const SE3d & T,
                       const Vector3d& uvq_w) const
   {
     Vector3d xyz_w = invert_depth(uvq_w);
@@ -620,7 +620,7 @@ private:
 };
 
 /** 3D inverse depth point class*/
-class SE3AnchordUVQ : public AbstractAnchoredPrediction<SE3,6,Vector3d,3,2>
+class SE3AnchordUVQ : public AbstractAnchoredPrediction<SE3d,6,Vector3d,3,2>
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -633,8 +633,8 @@ public:
     this->cam = cam_pars;
   }
 
-  inline Vector2d map(const SE3 & T_cw,
-                      const SE3 & A_aw,
+  inline Vector2d map(const SE3d & T_cw,
+                      const SE3d & A_aw,
                       const Vector3d& uvq_a) const
   {
     Vector3d xyz_w = A_aw.inverse()*invert_depth(uvq_a);
@@ -648,11 +648,11 @@ public:
   }
 
   Matrix<double,2,3>
-  pointJac(const SE3 & T_cw,
-           const SE3 & A_aw,
+  pointJac(const SE3d & T_cw,
+           const SE3d & A_aw,
            const Vector3d & psi_a) const
   {
-    SE3 T_ca = T_cw*A_aw.inverse();
+    SE3d T_ca = T_cw*A_aw.inverse();
     Vector3d y = T_ca*invert_depth(psi_a);
     Matrix<double,2,3> J1
         = d_proj_d_y(cam.focal_length(),y);
@@ -663,11 +663,11 @@ public:
   }
 
   Matrix<double,2,6>
-  frameJac(const SE3 & T_cw,
-           const SE3 & A_aw,
+  frameJac(const SE3d & T_cw,
+           const SE3d & A_aw,
            const Vector3d & psi_a) const
   {
-      SE3 T_ca = T_cw*A_aw.inverse();
+      SE3d T_ca = T_cw*A_aw.inverse();
     Vector3d y = T_ca*invert_depth(psi_a);
     Matrix<double,2,3> J1 = d_proj_d_y(cam.focal_length(),y);
     Matrix<double,3,6> J2 = d_expy_d_y(y);
@@ -675,23 +675,23 @@ public:
   }
 
   Matrix<double,2,6>
-  anchorJac(const SE3 & T_cw,
-            const SE3 & A_aw,
+  anchorJac(const SE3d & T_cw,
+            const SE3d & A_aw,
             const Vector3d & psi_a) const
   {
-    SE3 T_ca = T_cw*A_aw.inverse();
+    SE3d T_ca = T_cw*A_aw.inverse();
     Vector3d x = invert_depth(psi_a);
     Vector3d y = T_ca*x;
      Matrix<double,2,3> J1
         = d_proj_d_y(cam.focal_length(),y);
     Matrix<double,3,6> d_invexpx_dx
         = -d_expy_d_y(x);
-    return -J1*T_ca.rotation_matrix()*d_invexpx_dx;
+    return -J1*T_ca.rotationMatrix()*d_invexpx_dx;
   }
 
-  SE3 add(const SE3 &T, const Matrix<double,6,1> & delta) const
+  SE3d add(const SE3d &T, const Matrix<double,6,1> & delta) const
   {
-    return SE3::exp(delta)*T;
+    return SE3d::exp(delta)*T;
   }
 
 private:
@@ -700,7 +700,7 @@ private:
 
 
 /** 3D inverse depth point class*/
-class SE3NormUVQ : public AbstractPrediction<SE3,5,Vector3d,3,2>
+class SE3NormUVQ : public AbstractPrediction<SE3d,5,Vector3d,3,2>
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -713,7 +713,7 @@ public:
     this->cam = cam_pars;
   }
 
-  inline Vector2d map(const SE3 & T_cw,
+  inline Vector2d map(const SE3d & T_cw,
                       const Vector3d& uvq_w) const
   {
     Vector3d xyz_w = invert_depth(uvq_w);
@@ -726,7 +726,7 @@ public:
     return point+delta;
   }
 
-  SE3 add(const SE3 &T, const Matrix<double,5,1> & delta) const
+  SE3d add(const SE3d &T, const Matrix<double,5,1> & delta) const
   {
     Vector6d delta6;
     delta6[0] = delta[0];
@@ -734,7 +734,7 @@ public:
     delta6[2] = 0;
     delta6.tail<3>() = delta.tail<3>();
 
-    SE3 new_T = SE3::exp(delta6)*T;
+    SE3d new_T = SE3d::exp(delta6)*T;
     double length = new_T.translation().norm();
     assert(fabs(length)>0.00001);
 
@@ -751,7 +751,7 @@ private:
 
 /** 3D inverse depth point class*/
 class SE3AnchordUVQ_STEREO
-    : public AbstractAnchoredPrediction<SE3,6,Vector3d,3,3>
+    : public AbstractAnchoredPrediction<SE3d,6,Vector3d,3,3>
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -764,8 +764,8 @@ public:
     this->cam = cam_pars;
   }
 
-  inline Vector3d map(const SE3 & T_cw,
-                      const SE3 & A_aw,
+  inline Vector3d map(const SE3d & T_cw,
+                      const SE3d & A_aw,
                       const Vector3d& uvq_a) const
   {
     Vector3d xyz_w = A_aw.inverse()*invert_depth(uvq_a);
@@ -773,11 +773,11 @@ public:
   }
 
   Matrix3d
-  pointJac(const SE3 & T_cw,
-           const SE3 & A_aw,
+  pointJac(const SE3d & T_cw,
+           const SE3d & A_aw,
            const Vector3d & psi_a) const
   {
-    SE3 T_ca = T_cw*A_aw.inverse();
+    SE3d T_ca = T_cw*A_aw.inverse();
     Vector3d y = T_ca*invert_depth(psi_a);
     Matrix3d J1
         = d_stereoproj_d_y(cam.focal_length(),
@@ -790,11 +790,11 @@ public:
   }
 
   Matrix<double,3,6>
-  frameJac(const SE3 & T_cw,
-           const SE3 & A_aw,
+  frameJac(const SE3d & T_cw,
+           const SE3d & A_aw,
            const Vector3d & psi_a) const
   {
-    SE3 T_ca = T_cw*A_aw.inverse();
+    SE3d T_ca = T_cw*A_aw.inverse();
     Vector3d y = T_ca*invert_depth(psi_a);
     Matrix3d J1
         = d_stereoproj_d_y(cam.focal_length(),
@@ -807,11 +807,11 @@ public:
 
 
   Matrix<double,3,6>
-  anchorJac(const SE3 & T_cw,
-            const SE3 & A_aw,
+  anchorJac(const SE3d & T_cw,
+            const SE3d & A_aw,
             const Vector3d & psi_a) const
   {
-    SE3 T_ca = T_cw*A_aw.inverse();
+    SE3d T_ca = T_cw*A_aw.inverse();
     Vector3d x = invert_depth(psi_a);
     Vector3d y = T_ca*x;
     Matrix3d J1
@@ -820,7 +820,7 @@ public:
                            y);
     Matrix<double,3,6> d_invexpx_dx
         = -d_expy_d_y(x);
-    return -J1*T_ca.rotation_matrix()*d_invexpx_dx;
+    return -J1*T_ca.rotationMatrix()*d_invexpx_dx;
   }
 
   Vector3d add(const Vector3d & point,
@@ -829,9 +829,9 @@ public:
     return point+delta;
   }
 
-  SE3 add(const SE3 &T, const Matrix<double,6,1> & delta) const
+  SE3d add(const SE3d &T, const Matrix<double,6,1> & delta) const
   {
-    return SE3::exp(delta)*T;
+    return SE3d::exp(delta)*T;
   }
 
 private:
@@ -850,7 +850,7 @@ public:
     this->cam = cam;
   }
 
-  inline Vector3d map(const SE3 & T,
+  inline Vector3d map(const SE3d & T,
                       const Vector3d& uvu) const
   {
     Vector3d x = cam.unmap_uvu(uvu);
@@ -881,7 +881,7 @@ public:
     this->cam = cam;
   }
 
-  inline Vector3d map(const SE3 & T,
+  inline Vector3d map(const SE3d & T,
                       const Vector3d& uvq) const
   {
     Vector3d x = invert_depth(uvq);

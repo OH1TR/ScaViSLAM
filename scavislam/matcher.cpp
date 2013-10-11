@@ -19,7 +19,7 @@
 
 #include <stdint.h>
 
-#include <sophus/se3.h>
+#include <sophus/se3.hpp>
 
 #include <visiontools/accessor_macros.h>
 
@@ -97,13 +97,13 @@ void GuidedMatcher<Camera>
 
 template <class Camera>
 bool GuidedMatcher<Camera>
-::computePrediction(const SE3 & T_cur_from_w,
+::computePrediction(const SE3d & T_cur_from_w,
                     const typename ALIGNED<Camera>::vector & cam_vec,
                     const tr1::shared_ptr<CandidatePoint<Camera::obs_dim> >
                     & ap,
                     const ALIGNED<FrontendVertex>::int_hash_map & vertex_map,
                     Vector2d * uv_pyr,
-                    SE3 * T_anchorkey_from_w)
+                    SE3d * T_anchorkey_from_w)
 {
   ALIGNED<FrontendVertex>::int_hash_map::const_iterator it_T
       = vertex_map.find(ap->anchor_id);
@@ -113,7 +113,7 @@ bool GuidedMatcher<Camera>
 
   *T_anchorkey_from_w = it_T->second.T_me_from_w;
 
-  SE3 T_cur_from_anchor = T_cur_from_w*T_anchorkey_from_w->inverse();
+  SE3d T_cur_from_anchor = T_cur_from_w*T_anchorkey_from_w->inverse();
 
   Vector3d xyz_cur = T_cur_from_anchor*ap->xyz_anchor;
 
@@ -312,7 +312,7 @@ bool GuidedMatcher<Camera>
 template <class Camera>
 void GuidedMatcher<Camera>
 ::match(const tr1::unordered_map<int,Frame> & keyframe_map,
-        const SE3 & T_cur_from_actkey,
+        const SE3d & T_cur_from_actkey,
         const Frame & cur_frame,
         const ALIGNED<QuadTree<int> >::vector & feature_tree,
         const typename ALIGNED<Camera>::vector & cam_vec,
@@ -325,11 +325,11 @@ void GuidedMatcher<Camera>
         int thr_std,
         TrackData<Camera::obs_dim> * track_data)
 {
-  SE3 T_actkey_from_w
+  SE3d T_actkey_from_w
       = GET_MAP_ELEM(actkey_id, vertex_map).T_me_from_w;
-  SE3 T_w_from_actkey = T_actkey_from_w.inverse();
+  SE3d T_w_from_actkey = T_actkey_from_w.inverse();
 
-  SE3 T_cur_from_w = T_cur_from_actkey*T_actkey_from_w;
+  SE3d T_cur_from_w = T_cur_from_actkey*T_actkey_from_w;
 
   for (typename ALIGNED<tr1::shared_ptr<CandidatePoint<Camera::obs_dim> > >
        ::list::const_iterator it = ap_map.begin(); it!=ap_map.end();++it)
@@ -338,7 +338,7 @@ void GuidedMatcher<Camera>
         = *it;
 
     Vector2d uv_pyr;
-    SE3 T_anchorkey_from_w;
+    SE3d T_anchorkey_from_w;
     bool is_prediction_valid = computePrediction(T_cur_from_w,
                                                  cam_vec,
                                                  ap,
@@ -390,7 +390,7 @@ void GuidedMatcher<Camera>
     matchCandidates(candidates, cur_frame, cam_vec,
                     pixel_sum, pixel_sum_square, ap->anchor_level,
                     &match_data);
-    SE3 T_anchorkey_from_actkey = T_anchorkey_from_w*T_w_from_actkey;
+    SE3d T_anchorkey_from_actkey = T_anchorkey_from_w*T_w_from_actkey;
     Vector3d xyz_actkey = T_anchorkey_from_actkey.inverse()*ap->xyz_anchor;
     returnBestMatch(key_patch_with_border, cur_frame, match_data,
                     xyz_actkey, ap, track_data);
@@ -403,7 +403,7 @@ void GuidedMatcher<Camera>
 template <class Camera>
 cv::Mat GuidedMatcher<Camera>
 ::warpAffinve                (const cv::Mat & frame,
-                              const SE3 & T_c2_from_c1,
+                              const SE3d & T_c2_from_c1,
                               double depth,
                               const Vector2d & key_uv,
                               const Camera & cam,

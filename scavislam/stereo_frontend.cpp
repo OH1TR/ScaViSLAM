@@ -265,7 +265,7 @@ bool StereoFrontend
 
 
   int other_id = -1;
-  SE3 T_cur_from_other;
+  SE3d T_cur_from_other;
 
   ALIGNED<QuadTree<int> >::vector other_point_tree;
   PointStatistics other_stat(USE_N_LEVELS_FOR_MATCHING);
@@ -333,7 +333,7 @@ void StereoFrontend
   int oldkey_id = actkey_id;
   actkey_id = getNewUniqueId();
 
-  const SE3 & T_oldkey_from_w
+  const SE3d & T_oldkey_from_w
       = GET_MAP_ELEM(oldkey_id, neighborhood_->vertex_map).T_me_from_w;
 
 
@@ -445,7 +445,7 @@ void StereoFrontend
 bool StereoFrontend
 ::shallWeSwitchKeyframe(const list<TrackPoint3Ptr> & trackpoint_list,
                         int * other_id,
-                        SE3 * T_cur_from_other,
+                        SE3d * T_cur_from_other,
                         ALIGNED<QuadTree<int> >::vector * other_point_tree,
                         PointStatistics * other_stat)
 {
@@ -455,7 +455,7 @@ bool StereoFrontend
   double min_dist = 0.5*ui_parallax_thr;
   int closest = -1;
 
-  const SE3 & T_act_from_w
+  const SE3d & T_act_from_w
       = GET_MAP_ELEM(actkey_id,
                      neighborhood_->vertex_map).T_me_from_w;
 
@@ -469,8 +469,8 @@ bool StereoFrontend
 
     if (other_id!=actkey_id)
     {
-      const SE3 & T_other_from_w = it->second.T_me_from_w;
-      SE3 T_diff = T_cur_from_actkey_*T_act_from_w*T_other_from_w.inverse();
+      const SE3d & T_other_from_w = it->second.T_me_from_w;
+      SE3d T_diff = T_cur_from_actkey_*T_act_from_w*T_other_from_w.inverse();
       double dist = T_diff.translation().norm();
 
       if (dist<min_dist)
@@ -723,7 +723,7 @@ void  StereoFrontend
 //TODO: method too long
 void  StereoFrontend
 ::addMorePointsToOtherFrame(int new_keyframe_id,
-                            const SE3 & T_newkey_from_cur,
+                            const SE3d & T_newkey_from_cur,
                             const ALIGNED<QuadTree<int> >::vector & feature_tree,
                             const Matrix3i & add_flags,
                             const cv::Mat & disp_img,
@@ -928,7 +928,7 @@ AddToOptimzerPtr StereoFrontend
         sum_track_length += (uv_pyr-curkey_uv_pyr).norm();
         ++num_track_points;
 
-        SE3 T_w_from_anchor
+        SE3d T_w_from_anchor
             = GET_MAP_ELEM(ap->anchor_id, neighborhood_->vertex_map)
             .T_me_from_w.inverse();
         draw_data_.newtracked_points3d.at(ap->anchor_level)
@@ -958,7 +958,7 @@ AddToOptimzerPtr StereoFrontend
 
         sum_track_length += (uv_pyr-curkey_uv_pyr).norm();
         ++num_track_points;
-        SE3 T_w_from_anchor
+        SE3d T_w_from_anchor
             = GET_MAP_ELEM(ap->anchor_id, neighborhood_->vertex_map)
             .T_me_from_w.inverse();
         draw_data_.tracked_points3d.at(ap->anchor_level)

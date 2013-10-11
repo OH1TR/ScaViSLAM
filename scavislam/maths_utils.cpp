@@ -20,9 +20,9 @@
 #include <cassert>
 #include <limits>
 
-#include <sophus/se3.h>
+#include <sophus/se3.hpp>
 #ifdef MONO
-#include <sophus/sim3.h>
+#include <sophus/sim3.hpp>
 #endif
 
 #include <visiontools/accessor_macros.h>

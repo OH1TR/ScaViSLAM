@@ -60,7 +60,7 @@ DenseTracker
 //TODO: method too long
 //Decide: LM or Gauss-Newton
 void DenseTracker
-::denseTrackingGpu(SE3 * T_cur_from_actkey)
+::denseTrackingGpu(SE3d * T_cur_from_actkey)
 {
   const ALIGNED<StereoCamera>::vector & cam_vec
       = frame_data_.cam_vec;
@@ -133,7 +133,7 @@ void DenseTracker
         tracking_data.jacobian_times_res.copyTo(b.data());
 
         Vector6d x = H.ldlt().solve(-b);
-        SE3 T_cur_from_actkey_new =  SE3::exp(x)*(*T_cur_from_actkey);
+        SE3d T_cur_from_actkey_new =  SE3::exp(x)*(*T_cur_from_actkey);
 
 
 
@@ -193,7 +193,7 @@ void DenseTracker
 }
 
 void DenseTracker
-::computeDensePointCloudGpu(const SE3 & T_cur_from_actkey)
+::computeDensePointCloudGpu(const SE3d & T_cur_from_actkey)
 // for each pixel create a 3d point
 {
   for (int level=0; level<NUM_PYR_LEVELS; ++level)
@@ -220,7 +220,7 @@ void DenseTracker
 
 // ToDo: method too long (Implement abstract class for LM!)
 void DenseTracker
-::denseTrackingCpu(SE3 * T_cur_from_actkey)
+::denseTrackingCpu(SE3d * T_cur_from_actkey)
 {
   for (int level = NUM_PYR_LEVELS-1; level>=0; --level)
   {
@@ -264,7 +264,7 @@ void DenseTracker
     bool stop = false;
     double mu = 0.01f;
     int trial = 0;
-    SE3 T_cur_from_actkey_new;
+    SE3d T_cur_from_actkey_new;
 
     for (int i = 0; i<15; ++i)
     {
@@ -330,7 +330,7 @@ void DenseTracker
           }
         }
         Vector6d x = H.ldlt().solve(-Jres);
-        T_cur_from_actkey_new =  SE3::exp(x)*(*T_cur_from_actkey);
+        T_cur_from_actkey_new =  SE3d::exp(x)*(*T_cur_from_actkey);
 
         float new_chi2 = 0;
         for (int v=0; v<ref_dense_points_[level].size().height; ++v)
@@ -391,7 +391,7 @@ void DenseTracker
 }
 
 void DenseTracker
-::computeDensePointCloudCpu(const SE3 & T_cur_from_actkey_)
+::computeDensePointCloudCpu(const SE3d & T_cur_from_actkey_)
 // for each pixel create a 3d point
 {
   for (int level=0; level<NUM_PYR_LEVELS; ++level)

@@ -470,7 +470,7 @@ void Backend
 
 
 void Backend
-::pointsVisibleInRoot(const SE3 & T_root_from_world,
+::pointsVisibleInRoot(const SE3d & T_root_from_world,
                       const tr1::unordered_set<int> &
                       larger_neighborhood,
                       const tr1::unordered_set<int> & direct_neighbors,
@@ -511,7 +511,7 @@ void Backend
       const StereoGraph::Vertex & v_anchor =
           GET_MAP_ELEM(p.anchorframe_id, graph_.vertex_table());
 
-      SE3 T_world_from_anchor = v_anchor.T_me_from_world.inverse();
+      SE3d T_world_from_anchor = v_anchor.T_me_from_world.inverse();
 
       const StereoCamera & cam_pyr = cam_vec_.at(p.anchor_level);
       Vector3d xyz_root = T_root_from_world*T_world_from_anchor*p.xyz_anchor;
@@ -578,7 +578,7 @@ bool Backend
     return false;
 
   TrackData<3> track_data;
-  SE3 T_newroot_from_oldroot;
+  SE3d T_newroot_from_oldroot;
 
   if (matchAndAlign(root_frame, rootframe_id, vertex_table,
                     candidate_point_list,
@@ -598,7 +598,7 @@ bool Backend
   if (neighborid_to_strength.size()<=0)
     return false;
 
-  SE3 T_newroot_from_w
+  SE3d T_newroot_from_w
       = T_newroot_from_oldroot*v_root.T_me_from_world;
   graph_.registerKeyframes(rootframe_id, T_newroot_from_w,
                            neighborid_to_strength, trackpoint_list);
@@ -616,7 +616,7 @@ void Backend
 ::keyframesToRegister(int rootframe_id,
                       const tr1::unordered_set<int> & direct_neighbors,
                       const ALIGNED<FrontendVertex>::int_hash_map & vertex_table,
-                      const SE3 & T_newroot_from_oldroot,
+                      const SE3d & T_newroot_from_oldroot,
                       const TrackData<3> & track_data,
                       ImageStatsTable * frameid_to_pointlist,
                       list<StereoGraph::MyTrackPointPtr> * trackpoint_list,
@@ -727,7 +727,7 @@ bool Backend
                 int rootframe_id,
                 const ALIGNED<FrontendVertex>::int_hash_map & vertex_table,
                 const list<CandidatePoint3Ptr> & candidate_point_list,
-                SE3 * T_newroot_from_oldroot,
+                SE3d * T_newroot_from_oldroot,
                 TrackData<3> * track_data)
 {
   size_t COVIS_THR = graph_.covis_thr();
@@ -841,7 +841,7 @@ bool Backend
   const StereoGraph::Vertex & v_loop
       = GET_MAP_ELEM(loop.loop_keyframe_id, graph_.vertex_table());
 
-  SE3 T_loop_from_world
+  SE3d T_loop_from_world
       = loop.T_query_from_loop.inverse()*v_query.T_me_from_world;
 
   list< CandidatePoint3Ptr > candidate_point_list;
@@ -866,7 +866,7 @@ bool Backend
     const StereoGraph::Vertex & v_anchor =
         GET_MAP_ELEM(p.anchorframe_id, graph_.vertex_table());
 
-    SE3 T_world_from_anchor = v_anchor.T_me_from_world.inverse();
+    SE3d T_world_from_anchor = v_anchor.T_me_from_world.inverse();
 
     const StereoCamera & cam_pyr = cam_vec_.at(p.anchor_level);
     Vector3d xyz_loop = T_loop_from_world*T_world_from_anchor*p.xyz_anchor;
@@ -895,7 +895,7 @@ bool Backend
 
   TrackData<3> track_data;
 
-  SE3 T_newloop_from_oldloop;
+  SE3d T_newloop_from_oldloop;
   if (matchAndAlign(loop_frame, loop.loop_keyframe_id, vertex_table,
                     candidate_point_list,
                     &T_newloop_from_oldloop, &track_data) == false)
@@ -961,7 +961,7 @@ bool Backend
     return false;
 
   //calculate loop closure vertex in the metrical neighborhood around v_query
-  SE3 T_newloop_from_w
+  SE3d T_newloop_from_w
       = T_newloop_from_oldloop*loop.T_query_from_loop.inverse()
       *v_query.T_me_from_world;
 

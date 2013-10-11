@@ -18,7 +18,7 @@
 #ifndef SCAVISLAM_DENSE_TRACKER_H
 #define SCAVISLAM_DENSE_TRACKER_H
 
-#include <sophus/se3.h>
+#include <sophus/se3.hpp>
 
 #include "global.h"
 #include "quadtree.h"
@@ -60,16 +60,16 @@ public:
 
 #ifdef SCAVISLAM_CUDA_SUPPORT
   void
-  computeDensePointCloudGpu  (const SE3 & T_cur_from_actkey);
+  computeDensePointCloudGpu  (const SE3d & T_cur_from_actkey);
 
   void
-  denseTrackingGpu           (SE3 * T_cur_from_actkey);
+  denseTrackingGpu           (SE3d * T_cur_from_actkey);
 #else
   void
-  computeDensePointCloudCpu  (const SE3 & T_cur_from_actkey);
+  computeDensePointCloudCpu  (const SE3d & T_cur_from_actkey);
 
   void
-  denseTrackingCpu           (SE3 * T_cur_from_actkey);
+  denseTrackingCpu           (SE3d * T_cur_from_actkey);
 #endif
 
 #ifdef SCAVISLAM_CUDA_SUPPORT

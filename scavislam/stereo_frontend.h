@@ -110,7 +110,7 @@ public:
     return draw_data_;
   }
 
-  const SE3& T_cur_from_actkey() const
+  const SE3d& T_cur_from_actkey() const
   {
     return T_cur_from_actkey_;
   }
@@ -182,7 +182,7 @@ private:
   bool
   shallWeSwitchKeyframe      (const list<TrackPoint3Ptr> & trackpoint_list,
                               int * other_id,
-                              SE3 * T_cur_from_other,
+                              SE3d * T_cur_from_other,
                               ALIGNED<QuadTree<int> >::vector
                               * other_point_tree,
                               PointStatistics * other_stat);
@@ -238,7 +238,7 @@ private:
 
   void
   addMorePointsToOtherFrame  (int new_keyframe_id,
-                              const SE3 & T_newkey_from_cur,
+                              const SE3d & T_newkey_from_cur,
                               const ALIGNED<QuadTree<int> >::vector &
                               feature_tree,
                               const Matrix3i & add_flags,
@@ -254,7 +254,7 @@ private:
   PerformanceMonitor * per_mon_;
 
   NeighborhoodPtr neighborhood_;
-  SE3 T_cur_from_actkey_;
+  SE3d T_cur_from_actkey_;
 
   vector<FastGrid> fast_grid_;
   SE3XYZ_STEREO se3xyz_stereo_;

@@ -23,7 +23,7 @@
 #include <g2o/core/base_multi_edge.h>
 #include <g2o/core/base_unary_edge.h>
 
-#include <sophus/se3.h>
+#include <sophus/se3.hpp>
 #ifdef MONO
 #include <sophus/sim3.h>
 #endif
@@ -73,7 +73,7 @@ public:
   double baseline_;
 };
 
-class G2oVertexSE3 : public g2o::BaseVertex<6, SE3>
+class G2oVertexSE3 : public g2o::BaseVertex<6, SE3d>
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -160,7 +160,7 @@ public:
 };
 
 class G2oEdgeSE3
-    : public g2o::BaseBinaryEdge<6, SE3, G2oVertexSE3, G2oVertexSE3>
+    : public g2o::BaseBinaryEdge<6, SE3d, G2oVertexSE3, G2oVertexSE3>
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

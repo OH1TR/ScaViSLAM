@@ -21,7 +21,7 @@
 #include <boost/thread.hpp>
 #include <opencv2/flann/flann.hpp>
 
-#include <sophus/se3.h>
+#include <sophus/se3.hpp>
 
 #include "matcher.hpp"
 #include "keyframes.h"
@@ -44,7 +44,7 @@ struct DetectedLoop
 {
   int query_keyframe_id;
   int loop_keyframe_id;
-  SE3 T_query_from_loop;
+  SE3d T_query_from_loop;
 };
 
 class PlaceRecognizerMonitor

@@ -18,7 +18,7 @@
 #ifndef SCAVISLAM_HOMOGRAPHY_H
 #define SCAVISLAM_HOMOGRAPHY_H
 
-#include <sophus/se3.h>
+#include <sophus/se3.hpp>
 
 namespace ScaViSLAM
 {
@@ -26,10 +26,10 @@ namespace ScaViSLAM
   class Homography
   {
   public:
-    Homography(const SE3 & T_c2_from_c1);
+    Homography(const SE3d & T_c2_from_c1);
     Matrix3d calc_c2_from_c1(const Vector3d & normal,
                     const Vector3d & point_on_plane) const;
-    SE3 T_c2_from_c1;
+    SE3d T_c2_from_c1;
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };

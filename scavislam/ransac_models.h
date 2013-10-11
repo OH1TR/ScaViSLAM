@@ -18,9 +18,9 @@
 #ifndef SCAVISLAM_RANSAC_MODELS_H
 #define SCAVISLAM_RANSAC_MODELS_H
 
-#include <sophus/se3.h>
+#include <sophus/se3.hpp>
 #ifdef MONO
-#include <sophus/sim3.h>
+#include <sophus/sim3.hpp>
 #endif
 
 #include "global.h"
@@ -53,7 +53,7 @@ getOrientationAndCentriods   (Vector3d & p0a,
 
 struct SE3Model
 {
-  typedef SE3 Transformation;
+  typedef SE3d Transformation;
   typedef StereoCamera Camera;
 
   static void

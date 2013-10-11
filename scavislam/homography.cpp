@@ -21,7 +21,7 @@
 namespace ScaViSLAM
 {
 Homography
-::Homography(const SE3 & T_c2_from_c1) : T_c2_from_c1(T_c2_from_c1)
+::Homography(const SE3d & T_c2_from_c1) : T_c2_from_c1(T_c2_from_c1)
 {
 }
 
@@ -30,7 +30,7 @@ Matrix3d Homography
                                      const Vector3d & xyz_c1) const
 {
   double plane_dist = normal_c1.dot(xyz_c1);
-  return T_c2_from_c1.rotation_matrix()
+  return T_c2_from_c1.rotationMatrix()
       + (T_c2_from_c1.translation()*normal_c1.transpose())/plane_dist;
 }
 }

@@ -486,13 +486,13 @@ protected:
 
 };
 
-typedef PoseOptimizer<SE3,6,IdObs<2>,2> BA_SE3_XYZ;
-typedef PoseOptimizer<SE3,6,IdObs<2>,2> BA_SE3_XYZ_Lambda;
-typedef PoseOptimizer<SE3,6,IdObs<3>,3> BA_SE3_XYZ_STEREO;
+typedef PoseOptimizer<SE3d,6,IdObs<2>,2> BA_SE3_XYZ;
+typedef PoseOptimizer<SE3d,6,IdObs<2>,2> BA_SE3_XYZ_Lambda;
+typedef PoseOptimizer<SE3d,6,IdObs<3>,3> BA_SE3_XYZ_STEREO;
 
 #ifdef MONO
-typedef BundleAdjuster<Sim3,6,IdObs<2>,2> BA_Sim3_XYZ;
-typedef BundleAdjuster<Sim3,7,IdObs<3>,3> BA_Sim3_XYZ_STEREO;
+typedef BundleAdjuster<Sim3d,6,IdObs<2>,2> BA_Sim3_XYZ;
+typedef BundleAdjuster<Sim3d,7,IdObs<3>,3> BA_Sim3_XYZ_STEREO;
 #endif
 
 }

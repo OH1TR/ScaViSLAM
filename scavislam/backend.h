@@ -29,7 +29,7 @@
 namespace ScaViSLAM
 {
 
-typedef SlamGraph<SE3,StereoCamera,SE3XYZ_STEREO,3> StereoGraph;
+typedef SlamGraph<SE3d,StereoCamera,SE3XYZ_STEREO,3> StereoGraph;
 
 
 struct BackendDrawData
@@ -157,7 +157,7 @@ private:
   recomputeFastCorners       (const Frame & frame,
                               ALIGNED<QuadTree<int> >::vector * feature_tree);
   void
-  pointsVisibleInRoot        (const SE3 & T_root_from_world,
+  pointsVisibleInRoot        (const SE3d & T_root_from_world,
                               const tr1::unordered_set<int> &
                               larger_neighborhood,
                               const tr1::unordered_set<int> &
@@ -176,14 +176,14 @@ private:
                               & vertex_table,
                               const list<CandidatePoint3Ptr>
                               & candidate_point_list,
-                              SE3 * T_newroot_from_oldroot,
+                              SE3d * T_newroot_from_oldroot,
                               TrackData<3> * track_data);
   void
   keyframesToRegister        (int rootframe_id,
                               const tr1::unordered_set<int> & direct_neighbors,
                               const ALIGNED<FrontendVertex>::int_hash_map
                               & vertex_table,
-                              const SE3 & T_newroot_from_oldroot,
+                              const SE3d & T_newroot_from_oldroot,
                               const TrackData<3> & track_data,
                               ImageStatsTable  * frameid_to_pointlist,
                               list<StereoGraph::MyTrackPointPtr>

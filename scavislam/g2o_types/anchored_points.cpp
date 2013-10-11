@@ -170,13 +170,13 @@ void G2oEdgeProjectPSI2UVU::linearizeOplus()
   G2oVertexPointXYZ* vpoint = static_cast<G2oVertexPointXYZ*>(_vertices[0]);
   Vector3d psi_a = vpoint->estimate();
   G2oVertexSE3 * vpose = static_cast<G2oVertexSE3 *>(_vertices[1]);
-  SE3 T_cw = vpose->estimate();
+  SE3d T_cw = vpose->estimate();
   G2oVertexSE3 * vanchor = static_cast<G2oVertexSE3 *>(_vertices[2]);
   const G2oCameraParameters * cam
       = static_cast<const G2oCameraParameters *>(parameter(0));
 
-  SE3 A_aw = vanchor->estimate();
-  SE3 T_ca = T_cw*A_aw.inverse();
+  SE3d A_aw = vanchor->estimate();
+  SE3d T_ca = T_cw*A_aw.inverse();
   Vector3d x_a = invert_depth(psi_a);
   Vector3d y = T_ca*x_a;
   Matrix3d Jcam
@@ -185,7 +185,7 @@ void G2oEdgeProjectPSI2UVU::linearizeOplus()
                          y);
   _jacobianOplus[0] = -Jcam*d_Tinvpsi_d_psi(T_ca, psi_a);
   _jacobianOplus[1] = -Jcam*d_expy_d_y(y);
-  _jacobianOplus[2] = Jcam*T_ca.rotation_matrix()*d_expy_d_y(x_a);
+  _jacobianOplus[2] = Jcam*T_ca.rotationMatrix()*d_expy_d_y(x_a);
 }
 
 
@@ -204,11 +204,11 @@ bool G2oEdgeSE3
   return true;
 }
 
-Matrix6d third(const SE3 & A, const Vector6d & d)
+Matrix6d third(const SE3d & A, const Vector6d & d)
 {
   const Matrix6d & AdjA = A.Adj();
 
-  Matrix6d d_lie = SE3::d_lieBracketab_by_d_a(d);
+  Matrix6d d_lie = SE3d::d_lieBracketab_by_d_a(d);
   //cerr << d_lie << endl;
   return AdjA + 0.5*d_lie*AdjA + (1./12.)*d_lie*d_lie*AdjA;
 }
@@ -219,15 +219,15 @@ void G2oEdgeSE3
 {
   const G2oVertexSE3 * v1 = static_cast<const G2oVertexSE3 *>(_vertices[0]);
   const G2oVertexSE3 * v2 = static_cast<const G2oVertexSE3 *>(_vertices[1]);
-  SE3 T_21(_measurement);
+  SE3d T_21(_measurement);
   _error = (T_21*v1->estimate()*v2->estimate().inverse()).log();
 }
 
 void G2oEdgeSE3::
 linearizeOplus()
 {
-  const SE3 & T_21 = _measurement;
-  SE3 I;
+  const SE3d & T_21 = _measurement;
+  SE3d I;
   const Vector6d & d = _error;
   _jacobianOplusXi = third(T_21, d);
   _jacobianOplusXj = -third(I, -d);

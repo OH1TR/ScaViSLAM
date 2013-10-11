@@ -27,11 +27,6 @@
 #include "global.h"
 #include "quadtree.h"
 
-namespace Sophus
-{
-class SE3;
-}
-
 namespace ScaViSLAM
 {
 
@@ -67,7 +62,7 @@ public:
   static void
   match                      (const tr1::unordered_map<int,Frame> &
                               keyframe_map,
-                              const SE3 & T_cur_from_actkey,
+                              const SE3d & T_cur_from_actkey,
                               const Frame & cur_frame,
                               const ALIGNED<QuadTree<int> >::vector &
                               feature_tree,
@@ -94,7 +89,7 @@ public:
 
   static cv::Mat
   warpAffinve                (const cv::Mat & frame,
-                              const SE3 & T_c2_from_c1,
+                              const SE3d & T_c2_from_c1,
                               double depth,
                               const Vector2d & key_uv,
                               const Camera & cam,
@@ -153,14 +148,14 @@ private:
                               MatchData * match_data);
 
   static bool
-  computePrediction          (const SE3 & T_w_from_cur,
+  computePrediction          (const SE3d & T_w_from_cur,
                               const typename ALIGNED<Camera>::vector & cam_vec,
                               const tr1::shared_ptr<
                               CandidatePoint<Camera::obs_dim> > & ap,
                               const ALIGNED<FrontendVertex>::int_hash_map
                               & verte_map,
                               Vector2d * uv_pyr,
-                              SE3 * T_anchorkey_from_w);
+                              SE3d * T_anchorkey_from_w);
 
   static bool
   createObervation           (const Vector2f & new_uv_pyr,
