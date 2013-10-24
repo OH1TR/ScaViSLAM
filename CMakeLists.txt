@@ -8,7 +8,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
 
 SET (OpenCV_DIR /usr/local/share/OpenCV)
 
-SET (CMAKE_VERBOSE_MAKEFILE ON)
+# SET (CMAKE_VERBOSE_MAKEFILE ON)
 
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse4.1 -g")
 
@@ -17,12 +17,13 @@ SET(CUDA_NVCC_FLAGS  "-arch=sm_20" "--use_fast_math" "-O3"
 
 find_package(catkin REQUIRED
     COMPONENTS
-        dynamic_reconfigure
         pcl
         pcl_ros
         Pangolin
         Sophus
         VisionTools
+        image_transport
+        image_geometry
     )
 find_package(OpenCV 2.4.3 REQUIRED)
 find_package(SuiteSparse REQUIRED)
@@ -41,10 +42,22 @@ set(G2O_ROOT /opt/ros/groovy)
 find_package(G2O REQUIRED)
 
 catkin_package(
+    CATKIN_DEPENDS
+        VisionTools
+        Sophus
+        Pangolin
+    DEPENDS
+        G2O
+        CUDA
+        OpenCV
+    INCLUDE_DIRS
+        scavislam
+        ${CUDA_SDK_ROOT_DIR}/common/inc
+    LIBRARIES ${PROJECT_NAME}
+    CFG_EXTRAS definitions.cmake
 )
 
-ADD_DEFINITIONS(-DCUDA_BUILD -DBT_USE_DOUBLE_PRECISION -DSCAVISLAM_CUDA_SUPPORT)
-
+INCLUDE(cmake/definitions.cmake)
 
 SET (CLASSES  placerecognizer
               maths_utils
@@ -117,3 +130,34 @@ CUDA_ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCES})
 CUDA_ADD_EXECUTABLE(stereo_slam ${SOURCE_DIR}/stereo_slam.cpp)
 
 CUDA_ADD_EXECUTABLE(create_dictionary ${SOURCE_DIR}/create_dictionary.cpp)
+
+install(TARGETS ${PROJECT_NAME}
+       LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+       )
+
+install(FILES
+      scavislam/backend.h
+      scavislam/data_structures.h
+      scavislam/dense_tracking.h
+      scavislam/draw_items.h
+      scavislam/fast_grid.h
+      scavislam/filegrabber.h
+      scavislam/framedata.hpp
+      scavislam/frame_grabber.hpp
+      scavislam/global.h
+      scavislam/homography.h
+      scavislam/keyframes.h
+      scavislam/matcher.hpp
+      scavislam/math_utils.h
+      scavislam/placerecognizer.h
+      scavislam/pose_optimizer.h
+      scavislam/quadtree.h
+      scavislam/ransac.hpp
+      scavislam/ransac_models.h
+      scavislam/rgbd_grabber.h
+      scavislam/slam_graph.hpp
+      scavislam/stereo_camera.h
+      scavislam/stereo_frontend.h
+      scavislam/transformations.h
+    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
