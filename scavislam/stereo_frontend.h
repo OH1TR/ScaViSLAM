@@ -120,6 +120,11 @@ public:
     return tracker_;
   }
 
+#ifdef SCAVISLAM_CUDA_SUPPORT
+  void
+  getDisparityParameters(int *windowSize, int *minDisparity, int *num_disparities);
+#endif
+
   stack<AddToOptimzerPtr> to_optimizer_stack;
   tr1::unordered_map<int,Frame>  keyframe_map;
   tr1::unordered_map<int,list<CandidatePoint3Ptr > >  newpoint_map;

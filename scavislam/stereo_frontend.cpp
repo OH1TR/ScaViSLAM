@@ -613,7 +613,42 @@ calcDisparityGpu()
   }
 }
 
+void StereoFrontend::getDisparityParameters(int *windowSize, int *minDisparity, int *num_disparities)
+{
+  static pangolin::Var<int> stereo_method("ui.stereo_method",2,1,4);
+  static pangolin::Var<int> num_disp16("ui.num_disp16",2,1,10);
+  *num_disparities = num_disp16*16;
 
+  if (stereo_method==1)
+  {
+    // CPU Stereo_BM
+    *windowSize = 7;
+    *minDisparity = 0;
+  }
+  else if (stereo_method==2)
+  {
+    // GPU Stereo_BM
+    *windowSize = 19;
+    *minDisparity = 0;
+  }
+  else if (stereo_method==3)
+  {
+    // GPU Stereo_BP
+    /* Not really relevant for this method? */
+    *windowSize = 3;
+    *minDisparity = 0;
+  }
+  else if (stereo_method==4)
+  {
+    // GPU Stereo_CSBP
+    static pangolin::Var<int> stereo_iters("ui.stereo_iters",4,1,20);
+    static pangolin::Var<int> stereo_levels("ui.stereo_levels",4,1,5);
+    static pangolin::Var<int> stereo_nr_plane("ui.stereo_nr_plane",1,1,10);
+    /* Not really relevant for this method? */
+    *windowSize = 3;
+    *minDisparity = 0;
+  }
+}
 
 #else
 
