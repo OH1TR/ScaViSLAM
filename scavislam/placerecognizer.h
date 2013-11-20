@@ -81,7 +81,7 @@ struct Place
 class PlaceRecognizer
 {
 public:
-  PlaceRecognizer            (const StereoCamera & stereo_cam_);
+  PlaceRecognizer            (const StereoCamera & stereo_cam_, string wordspath);
 
   void
   addLocation                (const PlaceRecognizerData & pr_data);

@@ -85,11 +85,11 @@ void PlaceRecognizerMonitor
 
 
 PlaceRecognizer
-::PlaceRecognizer(const StereoCamera & stereo_cam)
+::PlaceRecognizer(const StereoCamera & stereo_cam, string wordspath)
   : stereo_cam_(stereo_cam)
 {
   cv::Mat words_float_as_four_uint8
-      = cv::imread(string("../data/surfwords10000.png"),-1);
+      = cv::imread(wordspath,-1);
   assert(words_float_as_four_uint8.size().area()>0);
   assert(words_float_as_four_uint8.type()==CV_8U);
   assert(sizeof(float)==4);

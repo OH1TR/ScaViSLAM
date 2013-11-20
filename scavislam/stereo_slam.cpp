@@ -188,7 +188,7 @@ startModules(const StereoCamera & stereo_camera,
   modules.frontend =
       new StereoFrontend(&modules.frame_grabber->frame_data, modules.per_mon);
   modules.frontend->initialize();
-  modules.pla_reg = new PlaceRecognizer(stereo_camera);
+  modules.pla_reg = new PlaceRecognizer(stereo_camera, "data/surfwords10000.png");
   modules.backend
       = new Backend(modules.frame_grabber->frame_data.cam_vec,
                     &modules.pla_reg->monitor);
@@ -698,7 +698,6 @@ int main(int argc, const char* argv[])
         {
           modules.frontend->neighborhood() = neighborhood;
           updated = true;
-
         }
       }
       bool is_frame_droped = false;
