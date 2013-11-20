@@ -69,10 +69,9 @@ SET (CLASSES  placerecognizer
               fast_grid
               stereo_frontend
               dense_tracking
-              filegrabber)
+              )
 
 SET (TEMPLATE ransac
-              frame_grabber
               framedata
               matcher
               slam_graph )
@@ -139,11 +138,8 @@ install(FILES
       scavislam/backend.h
       scavislam/data_structures.h
       scavislam/dense_tracking.h
-      scavislam/draw_items.h
       scavislam/fast_grid.h
-      scavislam/filegrabber.h
       scavislam/framedata.hpp
-      scavislam/frame_grabber.hpp
       scavislam/global.h
       scavislam/homography.h
       scavislam/keyframes.h
@@ -154,7 +150,6 @@ install(FILES
       scavislam/quadtree.h
       scavislam/ransac.hpp
       scavislam/ransac_models.h
-      scavislam/rgbd_grabber.h
       scavislam/slam_graph.hpp
       scavislam/stereo_camera.h
       scavislam/stereo_frontend.h
