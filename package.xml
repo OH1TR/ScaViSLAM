@@ -16,12 +16,10 @@
     <build_depend>Pangolin</build_depend>
     <build_depend>VisionTools</build_depend>
     <build_depend>Sophus</build_depend>
-    <build_depend>libg2o</build_depend>
 
     <run_depend>Pangolin</run_depend>
     <run_depend>VisionTools</run_depend>
     <run_depend>Sophus</run_depend>
-    <run_depend>libg2o</run_depend>
 
 </package>
 
