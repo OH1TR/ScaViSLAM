@@ -337,13 +337,13 @@ public:
         if (id1<id2)
         {
           inserted
-              = insert(make_pair(make_pair(id1, id2),
+              = this->insert(make_pair(make_pair(id1, id2),
                                  EdgePtr(new Edge(id1, id2, strenght, edge_type)))).second;
         }
         else
         {
           inserted
-              = insert(make_pair(make_pair(id2, id1),
+              = this->insert(make_pair(make_pair(id2, id1),
                                  EdgePtr(new Edge(id2, id1, strenght, edge_type)))).second;
         }
         if (inserted==false)
