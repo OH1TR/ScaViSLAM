@@ -41,7 +41,7 @@ find_package(Boost REQUIRED
     )
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
-set(G2O_ROOT /opt/ros/groovy)
+set(G2O_ROOT "/opt/ros/hydro")
 find_package(G2O REQUIRED)
 
 catkin_package(
