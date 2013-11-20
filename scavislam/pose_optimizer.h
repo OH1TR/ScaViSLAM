@@ -119,7 +119,7 @@ public:
   typedef AbstractPrediction
   <Frame,FrameDoF,Matrix<double,PointParNum,1>,PointDoF,ObsDim>
   _AbsJac;
-  typedef vector<Vector3d> _PointVec;
+  typedef ALIGNED<Vector3d>::vector _PointVec;
 
   typedef typename ALIGNED<Obs>::list  _Track;
   typedef typename ALIGNED<_Track>::int_map  _TrackMap;

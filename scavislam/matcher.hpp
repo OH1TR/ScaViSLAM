@@ -50,7 +50,7 @@ struct TrackData
   }
 
   typename ALIGNED<IdObs<obs_dim> >::list obs_list;
-  vector<Vector3d> point_list;
+  ALIGNED<Vector3d>::vector point_list;
   vector<tr1::shared_ptr<CandidatePoint<obs_dim> > > ba2globalptr;
 };
 
