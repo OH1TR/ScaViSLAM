@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(ScaViSLAM)
 
-SET( CMAKE_BUILD_TYPE RelWidthDebInfo )
+SET(CMAKE_BUILD_TYPE Debug )
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
     "${PROJECT_SOURCE_DIR}/CMakeModules/")
@@ -10,8 +10,13 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
 
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse4.1 -g")
 
-SET(CUDA_NVCC_FLAGS  "-arch=sm_20" "--use_fast_math" "-O3"
-                   "--ptxas-options=--verbose" "-keep"  )
+SET(CUDA_NVCC_FLAGS  "-arch=sm_20" "--use_fast_math"
+    "--ptxas-options=--verbose" "-keep"  )
+if(CMAKE_BUILD_TYPE==Debug)
+    SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "-g" "-G")
+else()
+    SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "-O3")
+endif()
 
 find_package(catkin REQUIRED
     COMPONENTS
