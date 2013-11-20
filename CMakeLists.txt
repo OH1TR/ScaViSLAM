@@ -128,7 +128,16 @@ LINK_LIBRARIES (
 
 CUDA_ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCES})
 
-CUDA_ADD_EXECUTABLE(stereo_slam ${SOURCE_DIR}/stereo_slam.cpp)
+CUDA_ADD_EXECUTABLE(stereo_slam
+    ${SOURCE_DIR}/filegrabber.cpp
+    ${SOURCE_DIR}/frame_grabber.cpp
+    ${SOURCE_DIR}/frame_grabber-impl.cpp
+    ${SOURCE_DIR}/stereo_slam.cpp
+    )
+target_link_libraries(stereo_slam
+    ${LINK_LIBRARIES}
+    ${PROJECT_NAME}
+    )
 
 CUDA_ADD_EXECUTABLE(create_dictionary ${SOURCE_DIR}/create_dictionary.cpp)
 
