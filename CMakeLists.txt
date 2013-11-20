@@ -6,8 +6,6 @@ SET( CMAKE_BUILD_TYPE RelWidthDebInfo )
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
     "${PROJECT_SOURCE_DIR}/CMakeModules/")
 
-SET (OpenCV_DIR /usr/local/share/OpenCV)
-
 # SET (CMAKE_VERBOSE_MAKEFILE ON)
 
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse4.1 -g")
@@ -22,7 +20,10 @@ find_package(catkin REQUIRED
         VisionTools
         Pangolin
     )
-find_package(OpenCV 2.4.3 REQUIRED)
+
+SET (OpenCV_DIR /usr/local/share/OpenCV)
+find_package(OpenCV 2.4.7 REQUIRED)
+
 find_package(SuiteSparse REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(CUDA REQUIRED)
