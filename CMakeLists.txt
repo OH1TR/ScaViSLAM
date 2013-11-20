@@ -17,13 +17,10 @@ SET(CUDA_NVCC_FLAGS  "-arch=sm_20" "--use_fast_math" "-O3"
 
 find_package(catkin REQUIRED
     COMPONENTS
-        pcl
         pcl_ros
-        Pangolin
         Sophus
         VisionTools
-        image_transport
-        image_geometry
+        Pangolin
     )
 find_package(OpenCV 2.4.3 REQUIRED)
 find_package(SuiteSparse REQUIRED)
@@ -47,7 +44,6 @@ catkin_package(
         Sophus
         Pangolin
     DEPENDS
-        G2O
         CUDA
         OpenCV
     INCLUDE_DIRS
