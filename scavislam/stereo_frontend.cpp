@@ -533,7 +533,7 @@ void StereoFrontend::
 calcDisparityGpu()
 {
   static pangolin::Var<int> stereo_method("ui.stereo_method",2,1,4);
-  static pangolin::Var<int> num_disp16("ui.num_disp16",2,1,10);
+  static pangolin::Var<int> num_disp16("ui.num_disp16",10,1,10);
   int num_disparities = num_disp16*16;
 
   if (stereo_method==1)
