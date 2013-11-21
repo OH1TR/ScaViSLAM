@@ -115,6 +115,8 @@ public:
     return T_cur_from_actkey_;
   }
 
+  void currentPose(SE3d& T_cur) const;
+
   const DenseTracker & tracker() const
   {
     return tracker_;

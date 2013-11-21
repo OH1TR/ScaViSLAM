@@ -305,6 +305,13 @@ bool StereoFrontend
   return true;
 }
 
+void StereoFrontend
+::currentPose(SE3d& T_cur) const
+{
+    const SE3d& T_act_from_w =
+      GET_MAP_ELEM(actkey_id, neighborhood_->vertex_map).T_me_from_w;
+    T_cur = (T_cur_from_actkey_*T_act_from_w).inverse();
+}
 
 void StereoFrontend
 ::addNewKeyframe(const ALIGNED<QuadTree<int> >::vector & feature_tree,
