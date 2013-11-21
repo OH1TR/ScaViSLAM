@@ -106,7 +106,7 @@ private:
                               & keyframe_to_wordcount_map,
                               tr1::unordered_map<int,float> & location_stats);
 
-  const StereoCamera & stereo_cam_;
+  const StereoCamera  stereo_cam_;
   tr1::shared_ptr<generic_index_type> flann_index_;
   cv::Mat words_;
   tr1::unordered_map<int,Place> location_map_;
