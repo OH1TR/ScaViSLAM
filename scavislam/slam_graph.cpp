@@ -1063,7 +1063,7 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
 ::setupG2o(G2oCameraParameters * g2o_cam,
            g2o::SparseOptimizer * optimizer)
 {
-  optimizer->setVerbose(true);
+  //optimizer->setVerbose(true);
   typename g2o::BlockSolver_6_3::LinearSolverType * linearSolver
       = SlamGraphMethods::allocateLinearSolver<g2o::BlockSolver_6_3>();
   g2o::BlockSolver_6_3 * block_solver
