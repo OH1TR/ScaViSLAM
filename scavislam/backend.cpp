@@ -201,21 +201,35 @@ void Backend
     DetectedLoop loop;
     if (place_reg_monitor_->getLoop(&loop))
     {
-      if (graph_.edge_table().orderd_find(loop.loop_keyframe_id,
+      bool loop_not_in_graph =
+          graph_.edge_table().orderd_find(loop.loop_keyframe_id,
                                           loop.query_keyframe_id)
-          == graph_.edge_table().end()
-          && (IS_IN_SET(loop.loop_keyframe_id,
-                        graph_.double_window())==false
-              || GET_MAP_ELEM(loop.loop_keyframe_id,
-                              graph_.double_window()))==StereoGraph::OUTER)
+          == graph_.edge_table().end();
+
+      bool loop_keyframe_not_in_graph = IS_IN_SET(loop.loop_keyframe_id, graph_.double_window())==false;
+      // || returns the value of its second argument
+      // if its first evalutates to true.
+      bool loop_keyframe_in_outer_window =
+            (loop_keyframe_not_in_graph ||
+             GET_MAP_ELEM(loop.loop_keyframe_id, graph_.double_window()))==StereoGraph::OUTER;
+
+      if (loop_not_in_graph && loop_keyframe_in_outer_window)
       {
         if(globalLoopClosure(loop))
         {
+          std::cerr << "Loop closure added" << std::endl;
           monitor.pushClosedLoop(loop);
           if(graph_.prepareForOptimization(loop.query_keyframe_id,
                                            loop.loop_keyframe_id))
             graph_.optimize(OptParams(2,true,3));
         }
+      } else {
+          if(!loop_not_in_graph)
+              std::cerr << "Existing loop found" << std::endl;
+          if(loop_keyframe_not_in_graph)
+              std::cerr << "loop keyframe
+          if(!loop_keyframe_in_outer_window)
+              std::cerr << "Loop keyframe in inner window" << std::endl;
       }
     }
 
@@ -421,8 +435,17 @@ void Backend
     pr_data.exclude_set.insert(neighborid);
   }
 
-  pr_data.do_loop_detection = pr_data.exclude_set.size()
+  bool detect= pr_data.exclude_set.size()
       < graph_.vertex_table().size();
+
+  if(detect) {
+      std::cerr << "doing loop detection ";
+  } else {
+      std::cerr << "no loop detection ";
+  }
+  std::cerr <<  pr_data.exclude_set.size() << " " << graph_.vertex_table().size() << std::endl;
+
+  pr_data.do_loop_detection = detect;
   pr_data.keyframe = to_optimiser->kf;
   pr_data.keyframe_id = to_optimiser->newkey_id;
 
@@ -898,8 +921,10 @@ bool Backend
   SE3d T_newloop_from_oldloop;
   if (matchAndAlign(loop_frame, loop.loop_keyframe_id, vertex_table,
                     candidate_point_list,
-                    &T_newloop_from_oldloop, &track_data) == false)
-    return false;
+                    &T_newloop_from_oldloop, &track_data) == false) {
+      std::cerr << "Could not align recognized frame" << std::endl;
+      return false;
+  }
 
   double REPROJ_THR = 2.0;
   size_t COVIS_THR = graph_.covis_thr();
@@ -950,15 +975,24 @@ bool Backend
       trackpoint_list.push_back(trackpoint);
     }
   }
-  if (trackpoint_list.size()<COVIS_THR)
-    return false;
+  if (trackpoint_list.size()<COVIS_THR) {
+      std::cerr << "Recognized frame has too few tracked points " << trackpoint_list.size() << " " << COVIS_THR << std::endl;
+      return false;
+  }
 
   // Make sure that enough point are found in all parts of the image.
   // (Thus make sure we found also points in the foreground so that the
   // relative loop closure constraint is accurately estimated.)
   if (num_lower<COVIS_THR/2 || num_upper<COVIS_THR/2
-      || num_left<COVIS_THR/2 || num_right<COVIS_THR/2)
+      || num_left<COVIS_THR/2 || num_right<COVIS_THR/2) {
+      std::cerr << "Recognized points are not well distributed " <<
+          "lower " << num_lower << " " <<
+          "upper " << num_upper << " " <<
+          "left  " << num_left << " " <<
+          "right " << num_right << " " <<
+          "need " << COVIS_THR/2 << std::endl;
     return false;
+  }
 
   //calculate loop closure vertex in the metrical neighborhood around v_query
   SE3d T_newloop_from_w

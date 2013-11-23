@@ -198,6 +198,8 @@ void PlaceRecognizer
   if (inliers.size()>30)
   {
     monitor.addLoop(loop);
+  } else {
+        std::cerr << "Geometric check failed " << inliers.size() << std::endl;
   }
 }
 
@@ -241,6 +243,8 @@ void PlaceRecognizer
   surf_ext.compute(pr_data.keyframe.pyr.at(0),
                    keypoints_with_depth,
                    new_loc.descriptors);
+
+  std::cerr << "Found " << new_loc.descriptors.rows << " SURF points" << std::endl;
 
   assert(new_loc.uvu_0_vec.size()==keypoints_with_depth.size());
   // Make sure SURF extractor did not remove keypoint from list!
@@ -315,6 +319,7 @@ void PlaceRecognizer
     }
     if (max_score>2.)
     {
+        std::cerr << "Word match detected" << std::endl;
       best_match = max_score_idx;
       const Place & matched_loc = GET_MAP_ELEM(best_match, location_map_);
       geometricCheck(new_loc,
