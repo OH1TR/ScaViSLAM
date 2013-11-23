@@ -832,7 +832,7 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
   int visibility_strength = depth_set.size();
   if(visibility_strength<covis_thr_)
   {
-    cerr << "ATTENTIOn, THIS SHOULD NEVER HAPPEN!" << endl;
+    cerr << "ATTENTIOn, THIS SHOULD NEVER HAPPEN! " << visibility_strength << " " << covis_thr_ << endl;
   }
 
   double median_depth = median(depth_set);
