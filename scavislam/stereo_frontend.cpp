@@ -459,7 +459,9 @@ bool StereoFrontend
   static pangolin::Var<float> ui_parallax_thr
       ("ui.parallax_thr",0.75f,0,2);
 
-  double min_dist = 0.5*ui_parallax_thr;
+  double dist_to_current = T_cur_from_actkey_.translation().norm();
+
+  double min_dist = max(0.5*ui_parallax_thr, dist_to_current);
   int closest = -1;
 
   const SE3d & T_act_from_w
