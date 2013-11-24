@@ -227,7 +227,7 @@ void Backend
           if(!loop_not_in_graph)
               std::cerr << "Existing loop found" << std::endl;
           if(loop_keyframe_not_in_graph)
-              std::cerr << "loop keyframe
+              std::cerr << "loop keyframe not in graph" << std::endl;
           if(!loop_keyframe_in_outer_window)
               std::cerr << "Loop keyframe in inner window" << std::endl;
       }
