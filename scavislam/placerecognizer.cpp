@@ -63,6 +63,27 @@ void PlaceRecognizerMonitor
 }
 
 bool PlaceRecognizerMonitor
+::getQuery(PlaceRecognizerData * data)
+{
+  boost::mutex::scoped_lock lock(my_mutex_);
+  if(!query_stack_.empty()){
+      *data=query_stack_.top();
+      query_stack_.pop();
+      return true;
+  }
+  return false;
+}
+
+void PlaceRecognizerMonitor
+::query(const PlaceRecognizerData & data)
+{
+  boost::mutex::scoped_lock lock(my_mutex_);
+  while(!query_stack_.empty())
+      query_stack_.pop();
+  query_stack_.push(data);
+}
+
+bool PlaceRecognizerMonitor
 ::getLoop(DetectedLoop * loop)
 {
   boost::mutex::scoped_lock lock(my_mutex_);
@@ -83,6 +104,24 @@ void PlaceRecognizerMonitor
   detected_loop_stack_.push(loop);
 }
 
+bool PlaceRecognizerMonitor
+::getQueryResponse(DetectedLoop * loop)
+{
+  boost::mutex::scoped_lock lock(my_mutex_);
+  if(!query_response_stack_.empty()){
+    *loop=query_response_stack_.top();
+    query_response_stack_.pop();
+    return true;
+  }
+  return false;
+}
+
+void PlaceRecognizerMonitor
+::queryResponse(const DetectedLoop & loop)
+{
+  boost::mutex::scoped_lock lock(my_mutex_);
+  query_response_stack_.push(loop);
+}
 
 PlaceRecognizer
 ::PlaceRecognizer(const StereoCamera & stereo_cam, string wordspath)
@@ -121,6 +160,12 @@ void PlaceRecognizer
     if(got_data)
     {
       addLocation(data);
+    }
+
+    got_data = monitor.getQuery(&data);
+    if(got_data)
+    {
+        queryLocation(data);
     }
 
     boost::this_thread::sleep(boost::posix_time::milliseconds(1));
@@ -171,9 +216,10 @@ void PlaceRecognizer
   }
 }
 
-void PlaceRecognizer
+int PlaceRecognizer
 ::geometricCheck(const Place & query,
-                 const Place & train)
+                 const Place & train,
+                 DetectedLoop & loop)
 {
   cv::BFMatcher matcher(cv::NORM_L2);
   vector<cv::DMatch > matches;
@@ -182,7 +228,6 @@ void PlaceRecognizer
                 train.descriptors,
                 matches);
   vector<cv::DMatch> inliers;
-  DetectedLoop loop;
 
   loop.query_keyframe_id = query.keyframe_id;
   loop.loop_keyframe_id = train.keyframe_id;
@@ -194,23 +239,14 @@ void PlaceRecognizer
                             query.uvu_0_vec,
                             inliers,
                             loop.T_query_from_loop);
- 
-  if (inliers.size()>30)
-  {
-    monitor.addLoop(loop);
-  } else {
-        std::cerr << "Geometric check failed " << inliers.size() << std::endl;
-  }
+
+  return inliers.size();
 }
 
 
-//TODO: method too long
 void PlaceRecognizer
-::addLocation
-( const PlaceRecognizerData & pr_data  )
+::computeSURFFeatures(const PlaceRecognizerData& pr_data, Place& new_loc)
 {
-  int best_match = -1;
-
   //todo: adpative SURF thr
   double surf_thr  = 600;
   vector<cv::KeyPoint> keypoints;
@@ -218,8 +254,6 @@ void PlaceRecognizer
   cv::SurfFeatureDetector surf(surf_thr, 2);
   surf.detect(pr_data.keyframe.pyr.at(0),keypoints);
 
-  Place new_loc;
-  new_loc.keyframe_id = pr_data.keyframe_id;
 
   for (unsigned i=0; i<keypoints.size(); ++i)
   {
@@ -248,11 +282,17 @@ void PlaceRecognizer
 
   assert(new_loc.uvu_0_vec.size()==keypoints_with_depth.size());
   // Make sure SURF extractor did not remove keypoint from list!
+}
 
+void PlaceRecognizer
+::assignWordsToFeatures(Place& new_loc,
+                        const int keyframe_id,
+                        const tr1::unordered_set<int>&  exclude_set,
+                        tr1::unordered_map<int,float>& location_stats)
+{
   int max_number_of_words = 1;
   cv::Mat idx(1,max_number_of_words,CV_32S);
   cv::Mat dists(1,max_number_of_words,CV_32F);
-  tr1::unordered_map<int,float> location_stats;
 
   // for all descriptors
   for (int r=0; r<new_loc.descriptors.rows; ++r)
@@ -280,52 +320,121 @@ void PlaceRecognizer
       tr1::unordered_map< int,int> & keyframe_to_wordcount_map
           = inverted_index_.at(word_idx);
 
-      if (pr_data.do_loop_detection)
-      {
-        calcLoopStatistics(pr_data.keyframe_id,
-                           pr_data.exclude_set,
-                           keyframe_to_wordcount_map,
-                           location_stats);
-      }
+      calcLoopStatistics(keyframe_id,
+                         exclude_set,
+                         keyframe_to_wordcount_map,
+                         location_stats);
 
       IntTable::iterator it
-          = keyframe_to_wordcount_map.find(pr_data.keyframe_id);
+          = keyframe_to_wordcount_map.find(keyframe_id);
       if (it!=keyframe_to_wordcount_map.end())
       {
         ++it->second;
       }
       else
       {
-        keyframe_to_wordcount_map.insert(make_pair(pr_data.keyframe_id,1));
+        keyframe_to_wordcount_map.insert(make_pair(keyframe_id,1));
       }
     }
   }
-  location_map_.insert(make_pair(pr_data.keyframe_id,new_loc));
+}
 
-  if (pr_data.do_loop_detection)
-  {
+//TODO: method too long
+void PlaceRecognizer
+::addLocation
+( const PlaceRecognizerData & pr_data  )
+{
+    int best_match = -1;
+
+    Place new_loc;
+    new_loc.keyframe_id = pr_data.keyframe_id;
+
+    computeSURFFeatures(pr_data, new_loc);
+
+    tr1::unordered_map<int,float> location_stats;
+    assignWordsToFeatures(new_loc,
+            pr_data.keyframe_id,
+            pr_data.exclude_set,
+            location_stats);
+
+    location_map_.insert(make_pair(pr_data.keyframe_id,new_loc));
+
+    if (pr_data.do_loop_detection)
+    {
+        float max_score = 0;
+        int max_score_idx = -1;
+
+        for (tr1::unordered_map<int,float>::iterator it=location_stats.begin();
+                it!=location_stats.end(); ++it)
+        {
+            float v = it->second;
+            if (v>max_score)
+            {
+                max_score = v;
+                max_score_idx = it->first;
+            }
+        }
+        if (max_score>2.)
+        {
+            std::cerr << "Word match detected" << std::endl;
+            best_match = max_score_idx;
+            const Place & matched_loc = GET_MAP_ELEM(best_match, location_map_);
+            DetectedLoop loop;
+            int inliers = geometricCheck(new_loc,
+                                         matched_loc,
+                                         loop);
+            if (inliers>30)
+            {
+                monitor.addLoop(loop);
+            } else {
+                std::cerr << "Geometric check failed " << inliers << std::endl;
+            }
+        }
+    }
+}
+
+void PlaceRecognizer
+::queryLocation
+( const PlaceRecognizerData& pr_data)
+{
+    Place new_loc;
+    new_loc.keyframe_id = pr_data.keyframe_id;
+
+    computeSURFFeatures(pr_data, new_loc);
+
+    tr1::unordered_map<int,float> location_stats;
+    assignWordsToFeatures(new_loc,
+            pr_data.keyframe_id,
+            pr_data.exclude_set,
+            location_stats);
+
     float max_score = 0;
     int max_score_idx = -1;
+    int best_match=-1;
 
     for (tr1::unordered_map<int,float>::iterator it=location_stats.begin();
-         it!=location_stats.end(); ++it)
+            it!=location_stats.end(); ++it)
     {
-      float v = it->second;
-      if (v>max_score)
-      {
-        max_score = v;
-        max_score_idx = it->first;
-      }
+        float v = it->second;
+        if (v>max_score)
+        {
+            max_score = v;
+            max_score_idx = it->first;
+        }
     }
     if (max_score>2.)
     {
         std::cerr << "Word match detected" << std::endl;
-      best_match = max_score_idx;
-      const Place & matched_loc = GET_MAP_ELEM(best_match, location_map_);
-      geometricCheck(new_loc,
-                     matched_loc);
+        best_match = max_score_idx;
+        const Place & matched_loc = GET_MAP_ELEM(best_match, location_map_);
+        DetectedLoop loop;
+        int inliers = geometricCheck(new_loc,
+                                     matched_loc,
+                                     loop);
+        if(inliers>30){
+            monitor.queryResponse(loop);
+        }
     }
-  }
 }
 
 }

@@ -57,14 +57,28 @@ public:
   addKeyframeData            (const PlaceRecognizerData & data);
 
   bool
+  getQuery                   (PlaceRecognizerData * data);
+
+  void
+  query                      (const PlaceRecognizerData & data);
+
+  bool
   getLoop                    (DetectedLoop * loop);
 
   void
   addLoop                    (const DetectedLoop & loop);
 
+  bool
+  getQueryResponse           (DetectedLoop * loop);
+
+  void
+  queryResponse              (const DetectedLoop & loop);
+
 private:
   queue<PlaceRecognizerData> new_keyframe_queue_;
   stack<DetectedLoop> detected_loop_stack_;
+  stack<PlaceRecognizerData> query_stack_;
+  stack<DetectedLoop> query_response_stack_;
   boost::mutex my_mutex_;
 };
 
@@ -87,6 +101,9 @@ public:
   addLocation                (const PlaceRecognizerData & pr_data);
 
   void
+  queryLocation              ( const PlaceRecognizerData& pr_data);
+
+  void
   operator()                 ();
 
   PlaceRecognizerMonitor monitor;
@@ -97,8 +114,18 @@ private:
   typedef cv::flann::GenericIndex< distance_type > generic_index_type;
 
   void
+  computeSURFFeatures(const PlaceRecognizerData& pr_data, Place& new_loc);
+
+  void
+  assignWordsToFeatures(Place& new_loc,
+                        const int keyframe_id,
+                        const tr1::unordered_set<int>&  exclude_set,
+                        tr1::unordered_map<int,float>& location_stats);
+
+  int
   geometricCheck             (const Place & query,
-                              const Place & train);
+                              const Place & train,
+                              DetectedLoop& loop);
   void
   calcLoopStatistics         (int cur_keyframe_id,
                               const tr1::unordered_set<int> & exclude_set,
