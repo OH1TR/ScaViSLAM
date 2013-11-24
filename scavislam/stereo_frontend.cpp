@@ -491,6 +491,7 @@ bool StereoFrontend
 
   if (closest!=-1 )
   {
+    std::cerr << "Closer keyframe exists" << std::endl;
     ImageFeature<3>::Table feat_table
         = GET_MAP_ELEM(closest, neighborhood_->vertex_map).feat_map;
 
@@ -506,6 +507,7 @@ bool StereoFrontend
       }
     }
 
+    std::cerr << "Count is " << count << std::endl;
     //TODO: add more sophisticated check
     if (count>100)
     {
@@ -529,9 +531,21 @@ bool StereoFrontend
   static pangolin::Var<float> ui_parallax_thr
       ("ui.parallax_thr",0.75f,0,2);
 
-  return num_featuerless_corners>params_.new_keyframe_featuerless_corners_thr
-      || T_cur_from_actkey_.translation().norm()>ui_parallax_thr
-      || av_track_length_>75.;
+  bool running_out_of_features = num_featuerless_corners>params_.new_keyframe_featuerless_corners_thr;
+  bool translated_enough = T_cur_from_actkey_.translation().norm()>ui_parallax_thr;
+  bool points_moved_enough = av_track_length_>75.;
+
+  bool drop = running_out_of_features
+      || translated_enough
+      || points_moved_enough;
+  if(drop) {
+      std::cerr << "New keyframe: features " << running_out_of_features
+          << ", translation " << translated_enough
+          << ", points " << points_moved_enough
+          << "." << std::endl;
+  }
+
+  return drop;
 }
 
 #ifdef SCAVISLAM_CUDA_SUPPORT
