@@ -47,7 +47,7 @@ FrameData(const StereoCamera &cam)
                     pyrFromZero_2d(cam.principal_point(),level),
                     cv::Size(pyrFromZero_d(cam.image_size().width,level),
                         pyrFromZero_d(cam.image_size().height,level)),
-                    cam.baseline()*(1<<level));
+                    cam.baseline());
     }
 }
 
