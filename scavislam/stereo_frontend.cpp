@@ -581,10 +581,11 @@ calcDisparityGpu()
 
     frame_data_->gpu_disp_32f.upload(frame_data_->disp);
     frame_data_->gpu_disp_32f.convertTo(frame_data_->gpu_disp_16s,CV_16S, 1.);
+    /*
     cv::gpu::drawColorDisp(frame_data_->gpu_disp_16s,
                            frame_data_->gpu_color_disp,num_disparities);
     frame_data_->gpu_color_disp.download(frame_data_->color_disp);
-
+    */
   }
   else if (stereo_method==2)
   {
@@ -594,12 +595,14 @@ calcDisparityGpu()
     gpu_stereo_bm(frame_data_->cur_left().gpu_uint8,
                   frame_data_->right.gpu_uint8,
                   frame_data_->gpu_disp_16s);
+    /*
     cv::gpu::drawColorDisp(frame_data_->gpu_disp_16s,
                            frame_data_->gpu_color_disp,
                            num_disparities);
+    frame_data_->gpu_color_disp.download(frame_data_->color_disp);
+    */
     frame_data_->gpu_disp_16s.convertTo(frame_data_->gpu_disp_32f,CV_32F,1.);
     frame_data_->gpu_disp_32f.download(frame_data_->disp);
-    frame_data_->gpu_color_disp.download(frame_data_->color_disp);
   }
   else if (stereo_method==3)
   {
@@ -607,12 +610,14 @@ calcDisparityGpu()
     gpu_stereo_bm(frame_data_->cur_left().gpu_uint8,
                   frame_data_->right.gpu_uint8,
                   frame_data_->gpu_disp_16s);
+    /*
     cv::gpu::drawColorDisp(frame_data_->gpu_disp_16s,
                            frame_data_->gpu_color_disp,
                            num_disparities);
+    frame_data_->gpu_color_disp.download(frame_data_->color_disp);
+    */
     frame_data_->gpu_disp_16s.convertTo(frame_data_->gpu_disp_32f,CV_32F,1.);
     frame_data_->gpu_disp_32f.download(frame_data_->disp);
-    frame_data_->gpu_color_disp.download(frame_data_->color_disp);
   }
   else if (stereo_method==4)
   {
@@ -627,12 +632,14 @@ calcDisparityGpu()
                   frame_data_->right.gpu_uint8,
                   frame_data_->gpu_disp_16s);
 
+    /*
     cv::gpu::drawColorDisp(frame_data_->gpu_disp_16s,
                            frame_data_->gpu_color_disp,
                            num_disparities);
+    frame_data_->gpu_color_disp.download(frame_data_->color_disp);
+    */
     frame_data_->gpu_disp_16s.convertTo(frame_data_->gpu_disp_32f,CV_32F,1.);
     frame_data_->gpu_disp_32f.download(frame_data_->disp);
-    frame_data_->gpu_color_disp.download(frame_data_->color_disp);
   }
 }
 
