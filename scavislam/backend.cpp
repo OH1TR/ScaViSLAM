@@ -208,7 +208,7 @@ void Backend
 
       bool loop_keyframe_not_in_graph = IS_IN_SET(loop.loop_keyframe_id, graph_.double_window())==false;
       // || returns the value of its second argument
-      // if its first evalutates to true.
+      // if its first evalutates to false.
       bool loop_keyframe_in_outer_window =
             (loop_keyframe_not_in_graph ||
              GET_MAP_ELEM(loop.loop_keyframe_id, graph_.double_window()))==StereoGraph::OUTER;
