@@ -239,6 +239,7 @@ bool StereoFrontend
                                                &track_data,
                                                &num_new_feat_matched);
   per_mon_->stop("match");
+  std::cerr << "keyframe " << actkey_id << " matched " << num_new_feat_matched << " new features of "  << track_data.obs_list.size() << "."<< std::endl;
 
   if (matched_enough_features==false)
     return false;
@@ -274,6 +275,7 @@ bool StereoFrontend
                             &other_point_tree,
                             &other_stat))
   {
+    std::cerr << "Switching keyframe " << actkey_id << " to " << other_id << std::endl;
     actkey_id = other_id;
     T_cur_from_actkey_ = T_cur_from_other;
 
@@ -292,6 +294,8 @@ bool StereoFrontend
                     &matched_new_feat,
                     &point_tree,
                     &point_stats);
+        } else {
+            cerr << "Would like to switch keyframes, but no points found"  << std::endl;
         }
     }
   }
@@ -447,6 +451,10 @@ void StereoFrontend
   keyframe_map.insert(make_pair(actkey_id,kf));
   keyframe_id2num.insert(make_pair(actkey_id, keyframe_id2num.size()));
   keyframe_num2id.push_back(actkey_id);
+  std::cerr << "Pushing new keyframe " <<
+      to_optimizer->oldkey_id << "->" << to_optimizer->newkey_id << " " <<
+      "with " << to_optimizer->track_point_list.size() << " track points and " <<
+      "and " << to_optimizer->new_point_list.size() << " new points." << std::endl;
   to_optimizer_stack.push(to_optimizer);
 
   T_cur_from_actkey_ = SE3();
@@ -1070,6 +1078,8 @@ bool StereoFrontend
                                      22,
                                      10,
                                      track_data);
+
+    std::cerr << "Points from actkey_id " << actkey_id << ": " << track_data->obs_list.size() << std::endl;
 
   pangolin::Var<int> var_num_max_points("ui.num_max_points",300,50,1000);
   for (multimap<int,int>::const_iterator it

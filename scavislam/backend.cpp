@@ -854,6 +854,8 @@ bool Backend
 ::globalLoopClosure(const DetectedLoop & loop)
 {
 
+    std::cerr << "Attempting global closure." << std::endl;
+
   const Frame & loop_frame
       = GET_MAP_ELEM(loop.loop_keyframe_id, keyframe_map_);
 

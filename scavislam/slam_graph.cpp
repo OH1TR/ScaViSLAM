@@ -171,6 +171,7 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
   // TODO: THIS  SHOULD BE CHECKED INSIDE OF THE FRONTEND
     if (strength_to_oldkey<covis_thr_)
   {
+    std::cerr << "Resetting strength_to_oldkey: " << strength_to_oldkey << " " << covis_thr_ << std::endl;
     strength_to_oldkey = covis_thr_;
   }
 
@@ -794,13 +795,16 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
 
   multiset<double> depth_set;
 
+  int nf=0;
   for (typename ImageFeature<ObsDim>::Table::const_iterator it
        = v1.feature_table.begin();
        it!=v1.feature_table.end();++it)
   {
     int point_id = it->first;
-    if (v2.feature_table.find(point_id)==v2.feature_table.end())
+    if (v2.feature_table.find(point_id)==v2.feature_table.end()) {
+        nf++;
       continue;
+    }
 
     const Point & p = GET_MAP_ELEM(point_id, point_table_);
 
@@ -832,7 +836,7 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
   int visibility_strength = depth_set.size();
   if(visibility_strength<covis_thr_)
   {
-    cerr << "ATTENTIOn, THIS SHOULD NEVER HAPPEN! " << visibility_strength << " " << covis_thr_ << endl;
+    cerr << "ATTENTIOn, THIS SHOULD NEVER HAPPEN! " << visibility_strength << " " << covis_thr_ << " " << nf << endl;
   }
 
   double median_depth = median(depth_set);
