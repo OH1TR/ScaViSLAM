@@ -281,15 +281,18 @@ bool StereoFrontend
   else
   {
 
-
+    int point_count = to_optimizer->track_point_list.size() + to_optimizer->new_point_list.size();
     *is_frame_dropped = shallWeDropNewKeyframe(point_stats);
     if(*is_frame_dropped)
     {
-      addNewKeyframe(feature_tree,
-                     to_optimizer,
-                     &matched_new_feat,
-                     &point_tree,
-                     &point_stats);
+        if(point_count>0)
+        {
+            addNewKeyframe(feature_tree,
+                    to_optimizer,
+                    &matched_new_feat,
+                    &point_tree,
+                    &point_stats);
+        }
     }
   }
   per_mon_->stop("drop keyframe");
