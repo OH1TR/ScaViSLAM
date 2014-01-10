@@ -160,7 +160,7 @@ void GuidedMatcher<Camera>
       continue;
     }
 
-    cv::Mat cur_patch(8,8,CV_8U,&(CUR_PATCH[0]));
+    cv::Mat cur_patch(BOX_SIZE,BOX_SIZE,CV_8U,&(CUR_PATCH[0]));
     cur_frame.pyr.at(level)
         (cv::Range(cur_uvi[1]-HALFBOX_SIZE,
                    cur_uvi[1]+HALFBOX_SIZE),
@@ -376,7 +376,7 @@ void GuidedMatcher<Camera>
     int pixel_sum = 0;
     int pixel_sum_square = 0;
 
-    cv::Mat data_wrap(8,8, CV_8U, &(KEY_PATCH[0]));
+    cv::Mat data_wrap(BOX_SIZE,BOX_SIZE, CV_8U, &(KEY_PATCH[0]));
     key_patch.copyTo(data_wrap);
 
     computePatchScores(&pixel_sum, &pixel_sum_square);
