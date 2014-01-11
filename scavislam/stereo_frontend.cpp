@@ -283,20 +283,14 @@ bool StereoFrontend
   else
   {
 
-    int point_count = to_optimizer->track_point_list.size() + to_optimizer->new_point_list.size();
     *is_frame_dropped = shallWeDropNewKeyframe(point_stats);
     if(*is_frame_dropped)
     {
-        if(point_count>0)
-        {
-            addNewKeyframe(feature_tree,
-                    to_optimizer,
-                    &matched_new_feat,
-                    &point_tree,
-                    &point_stats);
-        } else {
-            cerr << "Would like to switch keyframes, but no points found"  << std::endl;
-        }
+        addNewKeyframe(feature_tree,
+                to_optimizer,
+                &matched_new_feat,
+                &point_tree,
+                &point_stats);
     }
   }
   per_mon_->stop("drop keyframe");
@@ -547,18 +541,25 @@ bool StereoFrontend
   bool running_out_of_features = num_featuerless_corners>params_.new_keyframe_featuerless_corners_thr;
   bool translated_enough = T_cur_from_actkey_.translation().norm()>ui_parallax_thr;
   bool points_moved_enough = av_track_length_>75.;
+  tr1::unordered_map<int,int>::const_iterator actit=point_stats.strength_to_neighbor.find(actkey_id);
+  int actstrength = 0;
+  if( actit != point_stats.strength_to_neighbor.end() )
+      actstrength = actit->second;
+  bool connection_too_weak = actstrength<2;
 
   bool drop = running_out_of_features
       || translated_enough
       || points_moved_enough;
-  if(drop) {
+  if(drop && !connection_too_weak ) {
       std::cerr << "New keyframe: features " << running_out_of_features
           << ", translation " << translated_enough
           << ", points " << points_moved_enough
+          << ", strength_to_neighbor[actkey_id] " << actstrength
+          << ", covis_thr " << params_.covis_thr
           << "." << std::endl;
   }
 
-  return drop;
+  return drop && !connection_too_weak;
 }
 
 #ifdef SCAVISLAM_CUDA_SUPPORT
@@ -969,8 +970,10 @@ AddToOptimzerPtr StereoFrontend
         j = 1;
       ++(stats->num_points_grid3x3(i,j));
 
+      ADD_TO_MAP_ELEM(ap->anchor_id, 1, &stats->strength_to_neighbor);
 
       ++(stats->num_matched_points)[ap->anchor_level];
+
       Vector2d curkey_uv_pyr
           = pyrFromZero_2d(se3xyz.map(SE3(),point),
                            ap->anchor_level);
@@ -1079,7 +1082,7 @@ bool StereoFrontend
                                      10,
                                      track_data);
 
-    std::cerr << "Points from actkey_id " << actkey_id << ": " << track_data->obs_list.size() << std::endl;
+  int sz = track_data->obs_list.size();
 
   pangolin::Var<int> var_num_max_points("ui.num_max_points",300,50,1000);
   for (multimap<int,int>::const_iterator it
@@ -1104,6 +1107,7 @@ bool StereoFrontend
                                        10,
                                        track_data);
 
+    sz=track_data->obs_list.size();
   }
   *num_new_feat_matched  += track_data->obs_list.size();
 

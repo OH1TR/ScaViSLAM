@@ -181,6 +181,7 @@ private:
     vector<int> num_matched_points;
     Matrix2i num_points_grid2x2;
     Matrix3i num_points_grid3x3;
+    tr1::unordered_map<int,int> strength_to_neighbor;
   };
 
   bool
