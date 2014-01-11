@@ -501,8 +501,10 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
     //test whether point acutally exists!
     typename PointTable::const_iterator find_it
         = point_table_.find(tp->global_id);
-    if (find_it==point_table_.end())
+    if (find_it==point_table_.end()) {
+      cerr << "non-existent point " << tp->global_id << std::endl;
       continue;
+    }
 
     const PointPtr & p = find_it->second;
 
@@ -536,6 +538,7 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
       int frame_id = it->first;
       if (it->second>covis_thr()) {
           if (IS_IN_SET(frame_id, recent_keyframe)) {
+              std::cerr << "recent frame_id " << frame_id << std::endl;
               continue;
           }
           if (IS_IN_SET(frame_id, num_top)
@@ -546,9 +549,11 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
                   && GET_MAP_ELEM(frame_id, num_left)>=covis_thr_/2
                   && IS_IN_SET(frame_id, num_right)
                   && GET_MAP_ELEM(frame_id, num_right)>=covis_thr_/2) {
+              std::cerr << "in all corners frame_id " << frame_id << std::endl;
               continue;
           }
       }
+      std::cerr << "zeroing strength to " << frame_id << std::endl;
       it->second = 0;
     }
   }
