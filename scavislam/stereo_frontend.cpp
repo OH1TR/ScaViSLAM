@@ -194,6 +194,8 @@ bool StereoFrontend
 #else
   tracker_.denseTrackingCpu(&T_cur_from_actkey_);
 #endif
+  cerr << "T_cur_from_actkey.translation: " << T_cur_from_actkey_.translation().transpose() << std::endl;
+  cerr << "T_cur_from_actkey.rotation: " << T_cur_from_actkey_.so3().log().transpose() << std::endl;
   per_mon_->stop("dense tracking");
 
   per_mon_->start("stereo");
@@ -372,6 +374,7 @@ void StereoFrontend
     newpoint_map[it->first].remove_if(RemoveCondition(*matched_new_feat));
   }
 
+  std::cerr << "newpoint_map after remove size " << newpoint_map.size() << std::endl;
 
   const FrontendVertex & oldactive_vertex
       = GET_MAP_ELEM(oldkey_id, neighborhood_->vertex_map);
@@ -558,6 +561,15 @@ bool StereoFrontend
           << ", covis_thr " << params_.covis_thr
           << "." << std::endl;
   }
+  if( drop && connection_too_weak ) {
+      cerr << "Would like to add keyframe, but not enough points found "  << actstrength << "<" << params_.covis_thr << std::endl;
+      for( tr1::unordered_map<int,int>::const_iterator it=point_stats.strength_to_neighbor.begin();
+              it!=point_stats.strength_to_neighbor.end();
+              it++){
+          cerr << "Strength to " << it->first << " = " << it->second << std::endl;
+      }
+  }
+
 
   return drop && !connection_too_weak;
 }
@@ -897,6 +909,7 @@ void  StereoFrontend
       }
     }
   }
+  std::cerr << "newpoint_map size " << newpoint_map.size() << std::endl;
 }
 
 
@@ -1083,6 +1096,7 @@ bool StereoFrontend
                                      track_data);
 
   int sz = track_data->obs_list.size();
+    std::cerr << "new points from actkey_id " << actkey_id << ": " << sz << std::endl;
 
   pangolin::Var<int> var_num_max_points("ui.num_max_points",300,50,1000);
   for (multimap<int,int>::const_iterator it
@@ -1107,6 +1121,7 @@ bool StereoFrontend
                                        10,
                                        track_data);
 
+    std::cerr << "new points from neighbor " << it->second << ": " << (track_data->obs_list.size()-sz) << std::endl;
     sz=track_data->obs_list.size();
   }
   *num_new_feat_matched  += track_data->obs_list.size();
@@ -1132,6 +1147,7 @@ bool StereoFrontend
                                      track_data);
 
 
+  std::cerr << "tracked points: " << (track_data->obs_list.size()-sz) << std::endl;
   if (track_data->obs_list.size()<20)
   {
     return false;
