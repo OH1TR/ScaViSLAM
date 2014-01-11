@@ -534,19 +534,21 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
          it!=neighborid_to_strength->end(); ++it)
     {
       int frame_id = it->first;
-//      if (it->second<covis_thr())
-//        continue;
-//      if (IS_IN_SET(frame_id, recent_keyframe))
-//        continue;
-      if (IS_IN_SET(frame_id, num_top)
-          && GET_MAP_ELEM(frame_id, num_top)>=covis_thr_/2
-          && IS_IN_SET(frame_id, num_bottom)
-          && GET_MAP_ELEM(frame_id, num_bottom)>=covis_thr_/2
-          && IS_IN_SET(frame_id, num_left)
-          && GET_MAP_ELEM(frame_id, num_left)>=covis_thr_/2
-          && IS_IN_SET(frame_id, num_right)
-          && GET_MAP_ELEM(frame_id, num_right)>=covis_thr_/2)
-        continue;
+      if (it->second>covis_thr()) {
+          if (IS_IN_SET(frame_id, recent_keyframe)) {
+              continue;
+          }
+          if (IS_IN_SET(frame_id, num_top)
+                  && GET_MAP_ELEM(frame_id, num_top)>=covis_thr_/2
+                  && IS_IN_SET(frame_id, num_bottom)
+                  && GET_MAP_ELEM(frame_id, num_bottom)>=covis_thr_/2
+                  && IS_IN_SET(frame_id, num_left)
+                  && GET_MAP_ELEM(frame_id, num_left)>=covis_thr_/2
+                  && IS_IN_SET(frame_id, num_right)
+                  && GET_MAP_ELEM(frame_id, num_right)>=covis_thr_/2) {
+              continue;
+          }
+      }
       it->second = 0;
     }
   }
