@@ -185,8 +185,13 @@ startModules(const StereoCamera & stereo_camera,
   modules.per_mon->setup(&views->logger);
 
   modules.frame_grabber->initialise();
+
+  StereoFrontend::Parameters params;
   modules.frontend =
-      new StereoFrontend(&modules.frame_grabber->frame_data, modules.per_mon);
+      new StereoFrontend(&modules.frame_grabber->frame_data,
+              modules.per_mon,
+              params
+              );
   modules.frontend->initialize();
   modules.pla_reg = new PlaceRecognizer(stereo_camera, "data/surfwords10000.png");
   modules.backend

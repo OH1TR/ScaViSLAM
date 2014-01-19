@@ -38,35 +38,22 @@ using namespace VisionTools;
 
 StereoFrontend
 ::StereoFrontend(FrameData<StereoCamera> * frame_data,
-                 PerformanceMonitor * per_mon)
-  : frame_data_(frame_data),
+                 PerformanceMonitor * per_mon,
+                 Parameters params)
+   : frame_data_(frame_data),
     per_mon_(per_mon),
     neighborhood_(new Neighborhood()),
     se3xyz_stereo_(frame_data->cam),
     unique_id_counter_(-1),
-    tracker_(*frame_data_)
+    tracker_(*frame_data_),
+    params_(params)
 {
 }
-
 
 void StereoFrontend
 ::initialize()
 {
-  params_.newpoint_clearance =
-      pangolin::Var<int>("newpoint_clearance",2);
-  params_.covis_thr =
-      pangolin::Var<int>("frontend.covis_thr",15);
-  params_.num_frames_metric_loop_check
-      = pangolin::Var<int>("frontend.num_frames_metric_loop_check",200);
-  params_.new_keyframe_pixel_thr
-      = pangolin::Var<int>("frontend.new_keyframe_pixel_thr",70);
-  params_.new_keyframe_featuerless_corners_thr
-      = pangolin::Var<int>("frontend.new_keyframe_featuerless_corners_thr",2);
-  params_.save_dense_cloud
-      = pangolin::Var<bool>("frontend.save_dense_cloud",true);
-
-  pangolin::Var<size_t> use_n_levels_in_frontent("use_n_levels_in_frontent",2);
-  USE_N_LEVELS_FOR_MATCHING = use_n_levels_in_frontent;
+  USE_N_LEVELS_FOR_MATCHING = params_.use_n_levels_in_frontend;
 
   fast_grid_.resize(USE_N_LEVELS_FOR_MATCHING);
 
@@ -326,14 +313,12 @@ void StereoFrontend
   Matrix3i add_flags;
   add_flags.setZero();
 
-  static pangolin::Var<int> ui_min_num_points
-      ("ui.min_num_points",25,20,200);
 
   for (int i = 0; i<3; ++i)
   {
     for (int j = 0; j<3; ++j)
     {
-      if(point_stats->num_points_grid3x3(i,j)<=ui_min_num_points)
+      if(point_stats->num_points_grid3x3(i,j)<=params_.ui_min_num_points)
       {
         add_flags(i,j) = 1;
       }
@@ -419,7 +404,7 @@ void StereoFrontend
     int pose_id = it->first;
     int num_machtes = it->second;
 
-    if (num_machtes>params_.covis_thr)
+    if (num_machtes>params_.covis_threshold)
     {
       vf.strength_to_neighbors.insert(make_pair(num_machtes,pose_id));
     }
@@ -464,12 +449,9 @@ bool StereoFrontend
                         ALIGNED<QuadTree<int> >::vector * other_point_tree,
                         PointStatistics * other_stat)
 {
-  static pangolin::Var<float> ui_parallax_thr
-      ("ui.parallax_thr",0.75f,0,2);
-
   double dist_to_current = T_cur_from_actkey_.translation().norm();
 
-  double min_dist = max(0.5*ui_parallax_thr, dist_to_current);
+  double min_dist = max(0.5*params_.parallax_threshold, dist_to_current);
   int closest = -1;
 
   const SE3d & T_act_from_w
@@ -531,18 +513,15 @@ bool StereoFrontend
 bool StereoFrontend
 ::shallWeDropNewKeyframe(const PointStatistics & point_stats)
 {
-  int num_featuerless_corners=0;
+  int num_featureless_corners=0;
 
   for (int i=0; i<2; ++i)
     for (int j=0; j<2; ++j)
       if (point_stats.num_points_grid2x2(i,j)<15)
-        ++num_featuerless_corners;
+        ++num_featureless_corners;
 
-  static pangolin::Var<float> ui_parallax_thr
-      ("ui.parallax_thr",0.75f,0,2);
-
-  bool running_out_of_features = num_featuerless_corners>params_.new_keyframe_featuerless_corners_thr;
-  bool translated_enough = T_cur_from_actkey_.translation().norm()>ui_parallax_thr;
+  bool running_out_of_features = num_featureless_corners>params_.new_keyframe_featureless_corners_thr;
+  bool translated_enough = T_cur_from_actkey_.translation().norm()>params_.parallax_threshold;
   bool points_moved_enough = av_track_length_>75.;
   tr1::unordered_map<int,int>::const_iterator actit=point_stats.strength_to_neighbor.find(actkey_id);
   int actstrength = 0;
@@ -558,11 +537,11 @@ bool StereoFrontend
           << ", translation " << translated_enough
           << ", points " << points_moved_enough
           << ", strength_to_neighbor[actkey_id] " << actstrength
-          << ", covis_thr " << params_.covis_thr
+          << ", covis_threshold " << params_.covis_threshold
           << "." << std::endl;
   }
   if( drop && connection_too_weak ) {
-      cerr << "Would like to add keyframe, but not enough points found "  << actstrength << "<" << params_.covis_thr << std::endl;
+      cerr << "Would like to add keyframe, but not enough points found "  << actstrength << "<" << params_.covis_threshold << std::endl;
       for( tr1::unordered_map<int,int>::const_iterator it=point_stats.strength_to_neighbor.begin();
               it!=point_stats.strength_to_neighbor.end();
               it++){
@@ -579,11 +558,9 @@ bool StereoFrontend
 void StereoFrontend::
 calcDisparityGpu()
 {
-  static pangolin::Var<int> stereo_method("ui.stereo_method",2,1,4);
-  static pangolin::Var<int> num_disp16("ui.num_disp16",10,1,10);
-  int num_disparities = num_disp16*16;
+  int num_disparities = params_.num_disp16*16;
 
-  if (stereo_method==1)
+  if (params_.stereo_method==1)
   {
     cv::StereoBM stereo_bm;
     stereo_bm.state->preFilterCap = 31;
@@ -611,7 +588,7 @@ calcDisparityGpu()
     frame_data_->gpu_color_disp.download(frame_data_->color_disp);
     */
   }
-  else if (stereo_method==2)
+  else if (params_.stereo_method==2)
   {
     cv::gpu::StereoBM_GPU gpu_stereo_bm(cv::gpu::StereoBM_GPU::PREFILTER_XSOBEL,
                                         num_disparities);
@@ -628,7 +605,7 @@ calcDisparityGpu()
     frame_data_->gpu_disp_16s.convertTo(frame_data_->gpu_disp_32f,CV_32F,1.);
     frame_data_->gpu_disp_32f.download(frame_data_->disp);
   }
-  else if (stereo_method==3)
+  else if (params_.stereo_method==3)
   {
     cv::gpu::StereoBeliefPropagation gpu_stereo_bm(num_disparities);
     gpu_stereo_bm(frame_data_->cur_left().gpu_uint8,
@@ -643,15 +620,12 @@ calcDisparityGpu()
     frame_data_->gpu_disp_16s.convertTo(frame_data_->gpu_disp_32f,CV_32F,1.);
     frame_data_->gpu_disp_32f.download(frame_data_->disp);
   }
-  else if (stereo_method==4)
+  else if (params_.stereo_method==4)
   {
-    static pangolin::Var<int> stereo_iters("ui.stereo_iters",4,1,20);
-    static pangolin::Var<int> stereo_levels("ui.stereo_levels",4,1,5);
-    static pangolin::Var<int> stereo_nr_plane("ui.stereo_nr_plane",1,1,10);
     cv::gpu::StereoConstantSpaceBP gpu_stereo_bm(num_disparities,
-                                                 stereo_iters,
-                                                 stereo_levels,
-                                                 stereo_nr_plane);
+                                                 params_.stereo_iters,
+                                                 params_.stereo_levels,
+                                                 params_.stereo_nr_plane);
     gpu_stereo_bm(frame_data_->cur_left().gpu_uint8,
                   frame_data_->right.gpu_uint8,
                   frame_data_->gpu_disp_16s);
@@ -669,35 +643,30 @@ calcDisparityGpu()
 
 void StereoFrontend::getDisparityParameters(int *windowSize, int *minDisparity, int *num_disparities)
 {
-  static pangolin::Var<int> stereo_method("ui.stereo_method",2,1,4);
-  static pangolin::Var<int> num_disp16("ui.num_disp16",2,1,10);
-  *num_disparities = num_disp16*16;
+  *num_disparities = params_.num_disp16*16;
 
-  if (stereo_method==1)
+  if (params_.stereo_method==1)
   {
     // CPU Stereo_BM
     *windowSize = 7;
     *minDisparity = 0;
   }
-  else if (stereo_method==2)
+  else if (params_.stereo_method==2)
   {
     // GPU Stereo_BM
     *windowSize = 19;
     *minDisparity = 0;
   }
-  else if (stereo_method==3)
+  else if (params_.stereo_method==3)
   {
     // GPU Stereo_BP
     /* Not really relevant for this method? */
     *windowSize = 3;
     *minDisparity = 0;
   }
-  else if (stereo_method==4)
+  else if (params_.stereo_method==4)
   {
     // GPU Stereo_CSBP
-    static pangolin::Var<int> stereo_iters("ui.stereo_iters",4,1,20);
-    static pangolin::Var<int> stereo_levels("ui.stereo_levels",4,1,5);
-    static pangolin::Var<int> stereo_nr_plane("ui.stereo_nr_plane",1,1,10);
     /* Not really relevant for this method? */
     *windowSize = 3;
     *minDisparity = 0;
@@ -709,8 +678,7 @@ void StereoFrontend::getDisparityParameters(int *windowSize, int *minDisparity, 
 void StereoFrontend
 ::calcDisparityCpu()
 {
-  static pangolin::Var<int> num_disp16("ui.num_disp16",2,1,10);
-  int num_disparities = num_disp16*16;
+  int num_disparities = num_disp16_*16;
   cv::StereoBM stereo_bm;
   stereo_bm.state->preFilterCap = 31;
   stereo_bm.state->SADWindowSize = 7;
@@ -829,13 +797,12 @@ void  StereoFrontend
   int third_height = cam.height()*third;
   int twothird_width = cam.width()*2*third;
   int twothird_height = cam.height()*2*third;
-  pangolin::Var<int> var_num_max_points("ui.num_max_points",300,50,1000);
 
   for (int level = 0; level<USE_N_LEVELS_FOR_MATCHING;++level)
   {
     DrawItems::Point2dVec new_point_vec;
 
-    int num_max_points = pyrFromZero_i(var_num_max_points, level);
+    int num_max_points = pyrFromZero_i(params_.var_num_max_points, level);
     for (QuadTree<int>::EquiIter iter=feature_tree.at(level).begin_equi();
          !iter.reached_end();
          ++iter)
@@ -932,8 +899,6 @@ AddToOptimzerPtr StereoFrontend
   const StereoCamera & cam = frame_data_->cam;
   SE3XYZ se3xyz(cam);
 
-  static  pangolin::Var<float> max_reproj_error
-      ("ui.max_reproj_error",2,0,5);
 
   int half_width = cam.width()*0.5;
   int half_height = cam.height()*0.5;
@@ -958,9 +923,9 @@ AddToOptimzerPtr StereoFrontend
         = track_data.ba2globalptr.at(id_obs.point_id);
     int factor = zeroFromPyr_i(1, ap->anchor_level);
 
-    if (abs(diff[0])<max_reproj_error*factor
-        && abs(diff[1])<max_reproj_error*factor
-        && abs(diff[2])<3.*max_reproj_error)
+    if (abs(diff[0])<params_.max_reproj_error*factor
+        && abs(diff[1])<params_.max_reproj_error*factor
+        && abs(diff[2])<3.*params_.max_reproj_error)
     {
 
       int i = 1;
@@ -1098,11 +1063,10 @@ bool StereoFrontend
   int sz = track_data->obs_list.size();
     std::cerr << "new points from actkey_id " << actkey_id << ": " << sz << std::endl;
 
-  pangolin::Var<int> var_num_max_points("ui.num_max_points",300,50,1000);
   for (multimap<int,int>::const_iterator it
        = active_vertex.strength_to_neighbors.begin();
        it!=active_vertex.strength_to_neighbors.end()
-       && (int)(2*track_data->obs_list.size())<var_num_max_points; ++it)
+       && (int)(2*track_data->obs_list.size())<params_.var_num_max_points; ++it)
   {
     GuidedMatcher<StereoCamera>::match(keyframe_map,
                                        T_cur_from_actkey_,

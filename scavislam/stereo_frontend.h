@@ -85,8 +85,43 @@ struct StereoFrontendDrawData
 class StereoFrontend
 {
 public:
+  struct Parameters {
+          double parallax_threshold;
+          int newpoint_clearance;
+          int covis_threshold;
+          int new_keyframe_featureless_corners_thr;
+          int use_n_levels_in_frontend;
+          int ui_min_num_points;
+          int num_disp16;
+          int stereo_method;
+          int stereo_iters;
+          int stereo_levels;
+          int stereo_nr_plane;
+          int var_num_max_points;
+          double max_reproj_error;
+          int switch_keyframe_conection_threshold;
+       Parameters() {
+          parallax_threshold=0.75;
+          newpoint_clearance=2;
+          covis_threshold=15;
+          new_keyframe_featureless_corners_thr=2;
+          use_n_levels_in_frontend=2;
+          ui_min_num_points=20;
+          num_disp16=2;
+          stereo_method=2;
+          stereo_iters=4;
+          stereo_levels=4;
+          stereo_nr_plane=1;
+          var_num_max_points=300;
+          max_reproj_error=2;
+          switch_keyframe_conection_threshold=100;
+      }
+  };
+
   StereoFrontend             (FrameData<StereoCamera> * frame_data_,
-                              PerformanceMonitor * per_mon_);
+                              PerformanceMonitor * per_mon_,
+                              Parameters params);
+
   void
   processFirstFrame          ();
   bool
@@ -122,6 +157,10 @@ public:
     return tracker_;
   }
 
+  void SetParameters(Parameters par)
+  {
+    params_ = par;
+  }
 #ifdef SCAVISLAM_CUDA_SUPPORT
   void
   getDisparityParameters(int *windowSize, int *minDisparity, int *num_disparities);
@@ -150,18 +189,6 @@ private:
     {
       return matched_new_feat.find(ptr)!=matched_new_feat.end();
     }
-  };
-
-  struct Params
-  {
-    int  newpoint_clearance;
-    int  covis_thr;
-    int  num_frames_metric_loop_check;
-    int  new_keyframe_pixel_thr;
-    int  new_keyframe_featuerless_corners_thr;
-    int  graph_inner_window;
-    int  graph_outer_window;
-    bool  save_dense_cloud;
   };
 
   struct PointStatistics
@@ -270,7 +297,7 @@ private:
   int USE_N_LEVELS_FOR_MATCHING;
   int unique_id_counter_;
 
-  Params params_;
+  Parameters params_;
   StereoFrontendDrawData draw_data_;
   DenseTracker tracker_;
 
