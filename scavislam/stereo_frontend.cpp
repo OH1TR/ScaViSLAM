@@ -359,8 +359,6 @@ void StereoFrontend
     newpoint_map[it->first].remove_if(RemoveCondition(*matched_new_feat));
   }
 
-  std::cerr << "newpoint_map after remove size " << newpoint_map.size() << std::endl;
-
   const FrontendVertex & oldactive_vertex
       = GET_MAP_ELEM(oldkey_id, neighborhood_->vertex_map);
 
@@ -876,7 +874,6 @@ void  StereoFrontend
       }
     }
   }
-  std::cerr << "newpoint_map size " << newpoint_map.size() << std::endl;
 }
 
 

@@ -553,7 +553,6 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
               continue;
           }
       }
-      std::cerr << "zeroing strength to " << frame_id << std::endl;
       it->second = 0;
     }
   }
