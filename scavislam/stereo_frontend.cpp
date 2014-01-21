@@ -256,31 +256,27 @@ bool StereoFrontend
 
   int other_id = -1;
   SE3d T_cur_from_other;
+  bool switchKeyframe=false;
+  switchOrDrop( to_optimizer->track_point_list,
+                &point_stats,
+                &switchKeyframe,
+                is_frame_dropped,
+                &other_id,
+                &T_cur_from_other);
 
-  ALIGNED<QuadTree<int> >::vector other_point_tree;
-  PointStatistics other_stat(USE_N_LEVELS_FOR_MATCHING);
-  if (shallWeSwitchKeyframe(to_optimizer->track_point_list,
-                            &other_id, &T_cur_from_other,
-                            &other_point_tree,
-                            &other_stat))
+  if ( switchKeyframe )
   {
     std::cerr << "Switching keyframe " << actkey_id << " to " << other_id << std::endl;
     actkey_id = other_id;
     T_cur_from_actkey_ = T_cur_from_other;
-
   }
-  else
+  if( *is_frame_dropped )
   {
-
-    *is_frame_dropped = shallWeDropNewKeyframe(point_stats);
-    if(*is_frame_dropped)
-    {
-        addNewKeyframe(feature_tree,
-                to_optimizer,
-                &matched_new_feat,
-                &point_tree,
-                &point_stats);
-    }
+      addNewKeyframe(feature_tree,
+              to_optimizer,
+              &matched_new_feat,
+              &point_tree,
+              &point_stats);
   }
   per_mon_->stop("drop keyframe");
 
@@ -438,6 +434,141 @@ void StereoFrontend
   to_optimizer_stack.push(to_optimizer);
 
   T_cur_from_actkey_ = SE3();
+}
+
+void StereoFrontend
+::switchOrDrop( const list<TrackPoint3Ptr> &trackpoint_list,
+                PointStatistics *point_stats,
+                bool *switchKeyframe,
+                bool *dropKeyframe,
+                int *other_id,
+                SE3d *T_cur_from_other)
+{
+
+    double dist_to_current = T_cur_from_actkey_.translation().norm();
+
+    double min_dist = max(0.5*params_.parallax_threshold, dist_to_current);
+
+    calculateDistanceToNeighbors( point_stats, &min_dist, other_id, T_cur_from_other );
+    calculateTrackCounts( trackpoint_list, point_stats);
+    if( *other_id>=0 && *other_id!=actkey_id ) {
+        if( GET_MAP_ELEM( *other_id, point_stats->mutually_tracked_points ) < params_.switch_keyframe_conection_threshold ) {
+            *switchKeyframe = true;
+            return;
+        }
+    }
+    int num_featureless_corners=0;
+    for (int i=0; i<2; ++i)
+        for (int j=0; j<2; ++j)
+            if (point_stats->num_points_grid2x2(i,j)<15)
+                ++num_featureless_corners;
+
+    bool running_out_of_features = num_featureless_corners>params_.new_keyframe_featureless_corners_thr;
+    bool translated_enough = T_cur_from_actkey_.translation().norm()>params_.parallax_threshold;
+    bool points_moved_enough = av_track_length_>75.;
+    tr1::unordered_map<int,int>::const_iterator actit=point_stats->strength_to_neighbor.find(actkey_id);
+    int actstrength = 0;
+    if( actit != point_stats->strength_to_neighbor.end() )
+        actstrength = actit->second;
+    bool connection_too_weak = actstrength<2;
+
+    *dropKeyframe = running_out_of_features
+        || translated_enough
+        || points_moved_enough;
+    if(*dropKeyframe && !connection_too_weak ) {
+        std::cerr << "New keyframe: features " << running_out_of_features
+            << ", translation " << translated_enough
+            << ", points " << points_moved_enough
+            << ", strength_to_neighbor[actkey_id] " << actstrength
+            << ", covis_threshold " << params_.covis_threshold
+            << "." << std::endl;
+    }
+    if( *dropKeyframe && connection_too_weak ) {
+        cerr << "Would like to add keyframe, but not enough points found "  << actstrength << "<" << params_.covis_threshold << std::endl;
+        int strongest=-1;
+        int max_strength = 0;
+        for( tr1::unordered_map<int,int>::const_iterator it=point_stats->strength_to_neighbor.begin();
+                it!=point_stats->strength_to_neighbor.end();
+                it++){
+            cerr << "Strength to " << it->first << " = " << it->second << std::endl;
+            if( it->second > max_strength ) {
+                strongest = it->first;
+                const SE3d & T_act_from_w
+                    = GET_MAP_ELEM(actkey_id,
+                            neighborhood_->vertex_map).T_me_from_w;
+                const SE3d & T_w_from_me
+                    = GET_MAP_ELEM( it->first,
+                            neighborhood_->vertex_map).T_me_from_w.inverse();
+                *T_cur_from_other = T_cur_from_actkey_*T_act_from_w*T_w_from_me;
+                max_strength = it->second;
+            }
+        }
+        if( max_strength > params_.covis_threshold ) {
+            *other_id=strongest;
+            *switchKeyframe = true;
+        } else {
+            *dropKeyframe = false;
+        }
+    }
+    if( !dropKeyframe && *other_id>0 && GET_MAP_ELEM( *other_id, point_stats->mutually_tracked_points)>100) {
+        *switchKeyframe = true;
+    }
+    return;
+}
+
+void StereoFrontend
+::calculateDistanceToNeighbors( PointStatistics *point_stats,
+        double *min_dist,
+        int *min_id,
+        SE3d *T_cur_from_other)
+{
+    const SE3d & T_act_from_w
+        = GET_MAP_ELEM(actkey_id,
+                neighborhood_->vertex_map).T_me_from_w;
+
+    ALIGNED<FrontendVertex>::int_hash_map::const_iterator it
+        = neighborhood_->vertex_map.begin();
+    for (;
+            it!=neighborhood_->vertex_map.end();
+            ++it)
+    {
+        const SE3d & T_other_from_w = it->second.T_me_from_w;
+        SE3d T_diff = T_cur_from_actkey_*T_act_from_w*T_other_from_w.inverse();
+        double dist = T_diff.translation().norm();
+        point_stats->distance_to_neighbor.insert(
+                std::pair<int,double>( it->first, dist ) );
+        if (dist<*min_dist)
+        {
+            *T_cur_from_other = T_diff;
+            *min_dist = dist;
+            *min_id = it->first;
+        }
+    }
+}
+
+void StereoFrontend
+::calculateTrackCounts( const list<TrackPoint3Ptr> &trackpoint_list,
+                        PointStatistics *point_stats)
+{
+    ALIGNED<FrontendVertex>::int_hash_map::const_iterator vit
+        = neighborhood_->vertex_map.begin();
+    for (;
+            vit!=neighborhood_->vertex_map.end();
+            ++vit)
+    {
+        ImageFeature<3>::Table feat_table
+            = GET_MAP_ELEM(vit->first, neighborhood_->vertex_map).feat_map;
+        for (list<TrackPoint3Ptr>::const_iterator it = trackpoint_list.begin();
+                it!= trackpoint_list.end(); ++it)
+        {
+            const TrackPoint3Ptr & p = *it;
+            if (IS_IN_SET(p->global_id, feat_table))
+            {
+                ADD_TO_MAP_ELEM( vit->first,
+                        1, &point_stats->mutually_tracked_points);
+            }
+        }
+    }
 }
 
 bool StereoFrontend

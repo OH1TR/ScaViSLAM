@@ -209,7 +209,25 @@ private:
     Matrix2i num_points_grid2x2;
     Matrix3i num_points_grid3x3;
     tr1::unordered_map<int,int> strength_to_neighbor;
+    tr1::unordered_map<int,double> distance_to_neighbor;
+    tr1::unordered_map<int,int> mutually_tracked_points;
   };
+
+  void
+  calculateDistanceToNeighbors( PointStatistics *point_stats,
+                                double *min_dist,
+                                int *min_id,
+                                SE3d *T_cur_from_other);
+  void
+  calculateTrackCounts( const list<TrackPoint3Ptr> &track_point_list,
+                        PointStatistics *point_stats);
+  void
+  switchOrDrop( const list<TrackPoint3Ptr> &track_point_list,
+                PointStatistics *point_stats,
+                bool *switchKeyframe,
+                bool *dropKeyframe,
+                int *other_id,
+                SE3d *T_cur_from_other);
 
   bool
   shallWeDropNewKeyframe     (const PointStatistics & point_stats);
