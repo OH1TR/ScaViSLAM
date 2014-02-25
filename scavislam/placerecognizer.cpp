@@ -170,6 +170,7 @@ void PlaceRecognizer
     }
 
     boost::this_thread::sleep(boost::posix_time::milliseconds(1));
+    cv::waitKey(1);
   }
 }
 
@@ -357,6 +358,40 @@ void PlaceRecognizer
   }
 }
 
+cv::KeyPoint to_kp(const Vector3d &uvu)
+{
+    cv::KeyPoint kp;
+    kp.pt.x=uvu(0);
+    kp.pt.y=uvu(1);
+    return kp;
+}
+
+void
+drawMatches( const Place & new_loc, const Place & matched_loc, const vector<cv::DMatch> & matches)
+{
+    cv::Mat new_image = new_loc.image;
+    cv::Mat matched_image = matched_loc.image;
+    int height = new_image.rows;
+    int width = new_image.cols + matched_image.cols;
+    cv::Mat disp(height, width, CV_8UC3);
+
+    vector<cv::KeyPoint> new_kp;
+    new_kp.resize(new_loc.uvu_0_vec.size());
+    transform(new_loc.uvu_0_vec.begin(), new_loc.uvu_0_vec.end(), new_kp.begin(), to_kp);
+    vector<cv::KeyPoint> matched_kp;
+    matched_kp.resize(matched_loc.uvu_0_vec.size());
+    transform(matched_loc.uvu_0_vec.begin(), matched_loc.uvu_0_vec.end(), matched_kp.begin(), to_kp);
+
+    vector<char> mask;
+    mask.resize(matches.size());
+    for(size_t count=0; count<mask.size(); count++)
+        mask.at(count) = (count%5)==0;
+
+    cv::drawMatches(new_image, new_kp, matched_image, matched_kp, matches, disp, cv::Scalar::all(-1), cv::Scalar::all(-1), mask);
+    cv::imshow("Matches", disp);
+    cv::waitKey(1);
+}
+
 //TODO: method too long
 void PlaceRecognizer
 ::addLocation
@@ -401,6 +436,11 @@ void PlaceRecognizer
                         matches);
                 if (inliers>100)
                 {
+                    if(pr_data.keyframe_id - loop.loop_keyframe_id > 1000) {
+                        drawMatches(new_loc, matched_loc, matches);
+                        std::cerr << "Loop translation: " << loop.T_query_from_loop.translation().transpose() << std::endl;
+                        std::cerr << "Loop quaternion: " << loop.T_query_from_loop.so3().unit_quaternion().coeffs().transpose() << std::endl;
+                    }
                     monitor.addLoop(loop);
                 } else {
                     std::cerr << "Geometric check failed " << inliers << " frame " << loop.loop_keyframe_id << std::endl;
