@@ -989,8 +989,12 @@ bool Backend
   // Make sure that enough point are found in all parts of the image.
   // (Thus make sure we found also points in the foreground so that the
   // relative loop closure constraint is accurately estimated.)
-  if (num_lower<COVIS_THR/2 || num_upper<COVIS_THR/2
-      || num_left<COVIS_THR/2 || num_right<COVIS_THR/2) {
+  int distribution_count = 0;
+  distribution_count += (num_lower<COVIS_THR/2) ?1:0;
+  distribution_count += (num_upper<COVIS_THR/2) ?1:0;
+  distribution_count += (num_left<COVIS_THR/2)  ?1:0;
+  distribution_count += (num_right<COVIS_THR/2) ?1:0;
+  if (distribution_count < 2) {
       std::cerr << "Recognized points are not well distributed " <<
           "lower " << num_lower << " " <<
           "upper " << num_upper << " " <<
