@@ -267,7 +267,7 @@ void PlaceRecognizer
   vector<cv::KeyPoint> keypoints;
   vector<cv::KeyPoint> keypoints_with_depth;
   cv::SurfFeatureDetector surf(surf_thr, 2);
-  surf.detect(pr_data.keyframe.pyr.at(0),keypoints);
+  surf.detect(new_loc.image,keypoints);
 
 
   for (unsigned i=0; i<keypoints.size(); ++i)
@@ -303,7 +303,8 @@ void PlaceRecognizer
 ::assignWordsToFeatures(Place& new_loc,
                         const int keyframe_id,
                         const tr1::unordered_set<int>&  exclude_set,
-                        tr1::unordered_map<int,float>& location_stats)
+                        tr1::unordered_map<int,float>& location_stats,
+                        bool update)
 {
   int max_number_of_words = 1;
   cv::Mat idx(1,max_number_of_words,CV_32S);
@@ -340,15 +341,17 @@ void PlaceRecognizer
                          keyframe_to_wordcount_map,
                          location_stats);
 
-      IntTable::iterator it
-          = keyframe_to_wordcount_map.find(keyframe_id);
-      if (it!=keyframe_to_wordcount_map.end())
-      {
-        ++it->second;
-      }
-      else
-      {
-        keyframe_to_wordcount_map.insert(make_pair(keyframe_id,1));
+      if(update){
+          IntTable::iterator it
+              = keyframe_to_wordcount_map.find(keyframe_id);
+          if (it!=keyframe_to_wordcount_map.end())
+          {
+              ++it->second;
+          }
+          else
+          {
+              keyframe_to_wordcount_map.insert(make_pair(keyframe_id,1));
+          }
       }
     }
   }
@@ -365,13 +368,15 @@ void PlaceRecognizer
     new_loc.keyframe_id = pr_data.keyframe_id;
     std::cerr << "Adding place from keyframe " << new_loc.keyframe_id << std::endl;
 
+    new_loc.image = pr_data.keyframe.pyr.at(0);
     computeSURFFeatures(pr_data, new_loc);
 
     tr1::unordered_map<int,float> location_stats;
     assignWordsToFeatures(new_loc,
             pr_data.keyframe_id,
             pr_data.exclude_set,
-            location_stats);
+            location_stats,
+            true);
 
     location_map_.insert(make_pair(pr_data.keyframe_id,new_loc));
 
@@ -411,14 +416,17 @@ void PlaceRecognizer
 {
     Place new_loc;
     new_loc.keyframe_id = pr_data.keyframe_id;
+    std::cerr << "Querying place from keyframe " << new_loc.keyframe_id << std::endl;
 
+    new_loc.image = pr_data.keyframe.pyr.at(0);
     computeSURFFeatures(pr_data, new_loc);
 
     tr1::unordered_map<int,float> location_stats;
     assignWordsToFeatures(new_loc,
             pr_data.keyframe_id,
             pr_data.exclude_set,
-            location_stats);
+            location_stats,
+            false);
 
     float max_score = 0;
     int max_score_idx = -1;

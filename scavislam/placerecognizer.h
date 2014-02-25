@@ -88,6 +88,7 @@ struct Place
   ALIGNED<Vector3d>::vector uvu_0_vec;
   ALIGNED<Vector3d>::vector xyz_vec;
   cv::Mat descriptors;
+  cv::Mat image;
   int number_of_words;
   int keyframe_id;
 };
@@ -120,7 +121,8 @@ private:
   assignWordsToFeatures(Place& new_loc,
                         const int keyframe_id,
                         const tr1::unordered_set<int>&  exclude_set,
-                        tr1::unordered_map<int,float>& location_stats);
+                        tr1::unordered_map<int,float>& location_stats,
+                        bool update);
 
   int
   geometricCheck             (const Place & query,
