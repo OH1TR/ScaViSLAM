@@ -435,6 +435,7 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
     if (strength>=covis_thr_)
     {
       int other_id = it->first;
+      std::cerr << "Metric edge added " << v_newkey->own_id << " to " << other_id << std::endl;
 
       Vertex & v_other = GET_MAP_ELEM_REF(other_id, &vertex_table_);
       //      if (is_loop_closure_edge)
@@ -538,7 +539,6 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
       int frame_id = it->first;
       if (it->second>covis_thr()) {
           if (IS_IN_SET(frame_id, recent_keyframe)) {
-              std::cerr << "recent frame_id " << frame_id << std::endl;
               continue;
           }
           if (IS_IN_SET(frame_id, num_top)

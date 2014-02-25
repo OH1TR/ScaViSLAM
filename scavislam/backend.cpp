@@ -227,9 +227,9 @@ void Backend
           if(!loop_not_in_graph)
               std::cerr << "Existing loop found" << std::endl;
           if(loop_keyframe_not_in_graph)
-              std::cerr << "loop keyframe not in graph" << std::endl;
+              std::cerr << "loop keyframe " << loop.loop_keyframe_id << " not in graph" << std::endl;
           if(!loop_keyframe_in_outer_window)
-              std::cerr << "Loop keyframe in inner window" << std::endl;
+              std::cerr << "Loop keyframe " << loop.loop_keyframe_id << " in inner window" << std::endl;
       }
     }
 
@@ -771,8 +771,10 @@ bool Backend
                                      10,
                                      track_data);
 
-  if (track_data->obs_list.size()<COVIS_THR)
+  if (track_data->obs_list.size()<COVIS_THR) {
+      std::cerr << "Not enough covisible points: " << track_data->obs_list.size() << std::endl;
     return false;
+  }
 
   BA_SE3_XYZ_STEREO ba;
   OptimizerStatistics opt
@@ -800,8 +802,10 @@ bool Backend
                               PoseOptimizerParams(true,2,15),
                               T_newroot_from_oldroot,
                               &(track_data->point_list));
-  if (track_data->obs_list.size()<COVIS_THR)
+  if (track_data->obs_list.size()<COVIS_THR) {
+      std::cerr << "Secondary alignement failed" << std::endl;
     return false;
+  }
 
   return true;
 }

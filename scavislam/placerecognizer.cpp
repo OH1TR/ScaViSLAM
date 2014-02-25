@@ -348,6 +348,7 @@ void PlaceRecognizer
 
     Place new_loc;
     new_loc.keyframe_id = pr_data.keyframe_id;
+    std::cerr << "Adding place from keyframe " << new_loc.keyframe_id << std::endl;
 
     computeSURFFeatures(pr_data, new_loc);
 
