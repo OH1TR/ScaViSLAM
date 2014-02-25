@@ -125,7 +125,8 @@ private:
   int
   geometricCheck             (const Place & query,
                               const Place & train,
-                              DetectedLoop& loop);
+                              DetectedLoop& loop,
+                              vector<cv::DMatch> & matches);
   void
   calcLoopStatistics         (int cur_keyframe_id,
                               const tr1::unordered_set<int> & exclude_set,

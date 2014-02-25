@@ -27,6 +27,7 @@
 #include "ransac_models.h"
 #include "ransac.hpp"
 
+#include <opencv2/core/eigen.hpp>
 // Thanks a lot to Adrien Angeli for all help and discussion concerning
 // place recognition using "bag of words".
 
@@ -219,30 +220,44 @@ void PlaceRecognizer
 int PlaceRecognizer
 ::geometricCheck(const Place & query,
                  const Place & train,
-                 DetectedLoop & loop)
+                 DetectedLoop & loop,
+                 vector<cv::DMatch> & matches)
 {
   cv::BFMatcher matcher(cv::NORM_L2);
-  vector<cv::DMatch > matches;
 
   matcher.match(query.descriptors,
                 train.descriptors,
                 matches);
-  vector<cv::DMatch> inliers;
 
   loop.query_keyframe_id = query.keyframe_id;
   loop.loop_keyframe_id = train.keyframe_id;
 
-  RanSaC<SE3Model>::compute(100,
-                            stereo_cam_,
-                            matches,
-                            train.xyz_vec,
-                            query.uvu_0_vec,
-                            inliers,
-                            loop.T_query_from_loop);
+  cv::Mat new_pts(matches.size(), 1, CV_64FC2);
+  cv::Mat matched_pts(matches.size(), 1, CV_64FC2);
+  for(size_t row=0;row<matches.size();row++){
+      cv::DMatch m=matches.at(row);
+      new_pts.at<cv::Vec2d>(row) = cv::Vec2d(query.uvu_0_vec.at(m.queryIdx)(0), query.uvu_0_vec.at(m.queryIdx)(1));
+      matched_pts.at<cv::Vec2d>(row) = cv::Vec2d(train.uvu_0_vec.at(m.trainIdx)(0), train.uvu_0_vec.at(m.trainIdx)(1));
+  }
+  cv::Mat status;
+  cv::Mat cvF=cv::findFundamentalMat( new_pts, matched_pts, CV_FM_RANSAC, 1., 0.99, status);
+  Eigen::Matrix3d F;
+  cv2eigen(cvF, F);
+  Eigen::Matrix3d K=stereo_cam_.intrinsics();
+  Eigen::Matrix3d E = K.transpose() * F * K;
+  Eigen::Matrix3d Rtilde;
+  Rtilde << 0,  1, 0, -1, 0, 0, 0, 0, 1;
+  Eigen::Matrix3d Zcross;
+  Zcross << 0, -1, 0,  1, 0, 0, 0, 0, 0;
+  Eigen::JacobiSVD<Matrix3d> svd(E, Eigen::ComputeFullU|Eigen::ComputeFullV);
+  Eigen::Matrix3d R=svd.matrixU()*Rtilde*svd.matrixV().transpose();
+  loop.T_query_from_loop.setRotationMatrix(R);
+  Eigen::Matrix3d Tcross=svd.matrixV()*Zcross*svd.matrixV().transpose();
+  loop.T_query_from_loop.translation() << Tcross(2,1), Tcross(0,2), Tcross(1,0);
 
-  return inliers.size();
+
+  return cv::countNonZero( status );
 }
-
 
 void PlaceRecognizer
 ::computeSURFFeatures(const PlaceRecognizerData& pr_data, Place& new_loc)
@@ -369,26 +384,22 @@ void PlaceRecognizer
                 it!=location_stats.end(); ++it)
         {
             float v = it->second;
-            if (v>max_score)
+            if (v>2.)
             {
-                max_score = v;
-                max_score_idx = it->first;
-            }
-        }
-        if (max_score>2.)
-        {
-            std::cerr << "Word match detected" << std::endl;
-            best_match = max_score_idx;
-            const Place & matched_loc = GET_MAP_ELEM(best_match, location_map_);
-            DetectedLoop loop;
-            int inliers = geometricCheck(new_loc,
-                                         matched_loc,
-                                         loop);
-            if (inliers>30)
-            {
-                monitor.addLoop(loop);
-            } else {
-                std::cerr << "Geometric check failed " << inliers << std::endl;
+                std::cerr << "Word match detected" << std::endl;
+                const Place & matched_loc = GET_MAP_ELEM(it->first, location_map_);
+                DetectedLoop loop;
+                vector<cv::DMatch > matches;
+                int inliers = geometricCheck(new_loc,
+                        matched_loc,
+                        loop,
+                        matches);
+                if (inliers>100)
+                {
+                    monitor.addLoop(loop);
+                } else {
+                    std::cerr << "Geometric check failed " << inliers << " frame " << loop.loop_keyframe_id << std::endl;
+                }
             }
         }
     }
@@ -429,10 +440,13 @@ void PlaceRecognizer
         best_match = max_score_idx;
         const Place & matched_loc = GET_MAP_ELEM(best_match, location_map_);
         DetectedLoop loop;
+        vector<cv::DMatch > matches;
         int inliers = geometricCheck(new_loc,
                                      matched_loc,
-                                     loop);
-        if(inliers>30){
+                                     loop,
+                                     matches);
+        if (inliers>150)
+        {
             monitor.queryResponse(loop);
         }
     }
