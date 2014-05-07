@@ -136,7 +136,8 @@ void StereoFrontend
   }
 
   Frame kf = Frame(frame_data_->cur_left().pyr_uint8,
-                   frame_data_->disp).clone();
+                   frame_data_->disp,
+                   frame_data_->cur_left().time).clone();
 
   per_mon_->start("fast");
   computeFastCorners(5, &feature_tree, &kf.cell_grid2d);
@@ -215,7 +216,8 @@ bool StereoFrontend
 
   per_mon_->start("fast");
   cur_frame_ = Frame(frame_data_->cur_left().pyr_uint8,
-                     frame_data_->disp);
+                     frame_data_->disp,
+                     frame_data_->cur_left().time);
   /*cur_frame_.feature_tree*/
   ALIGNED<QuadTree<int> >::vector feature_tree;
   computeFastCorners(6, &feature_tree, &cur_frame_.cell_grid2d);

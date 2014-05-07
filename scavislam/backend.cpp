@@ -254,7 +254,6 @@ BackendDrawDataPtr Backend
   return draw_data;
 }
 
-
 NeighborhoodPtr Backend
 ::computeNeighborhood(int root_id) const
 {
@@ -405,7 +404,7 @@ void Backend
 {
   if(to_optimiser->first_frame)
   {
-    graph_.addFirstKeyframe(to_optimiser->newkey_id);
+    graph_.addFirstKeyframe(to_optimiser->newkey_id, to_optimiser->kf.time);
   }
   else
   {
@@ -413,7 +412,8 @@ void Backend
                        to_optimiser->newkey_id,
                        to_optimiser->T_newkey_from_oldkey,
                        to_optimiser->new_point_list,
-                       to_optimiser->track_point_list);
+                       to_optimiser->track_point_list,
+                       to_optimiser->kf.time);
   }
 }
 

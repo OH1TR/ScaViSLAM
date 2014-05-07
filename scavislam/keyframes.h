@@ -21,6 +21,7 @@
 #include <tr1/memory>
 #include <vector>
 #include <opencv2/opencv.hpp>
+#include <ros/time.h>
 
 #include "quadtree.h"
 
@@ -50,8 +51,9 @@ struct Frame
   Frame(){}
 
   Frame(const vector<cv::Mat> & cur_pyr,
-        const cv::Mat & cur_disp)
-    : pyr(cur_pyr), disp(cur_disp)
+        const cv::Mat & cur_disp,
+        ros::Time cur_time)
+    : pyr(cur_pyr), disp(cur_disp), time(cur_time)
   {
   }
 
@@ -60,6 +62,7 @@ struct Frame
     disp = other.disp;
     pyr = other.pyr;
     cell_grid2d = other.cell_grid2d;
+    time = other.time;
   }
 
   void operator=(const Frame & other)
@@ -67,6 +70,7 @@ struct Frame
     disp = other.disp;
     pyr = other.pyr;
     cell_grid2d = other.cell_grid2d;
+    time = other.time;
   }
 
   Frame clone()
@@ -79,12 +83,14 @@ struct Frame
       other.pyr[i] = pyr[i].clone();
     }
     other.cell_grid2d = cell_grid2d;
+    other.time = time;
     return other;
   }
 
   vector<cv::Mat> pyr;
   cv::Mat disp;
   vector<CellGrid2d > cell_grid2d;
+  ros::Time time;
 };
 
 

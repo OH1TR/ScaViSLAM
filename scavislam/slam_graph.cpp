@@ -146,7 +146,8 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
               int newkey_id,
               const Pose & T_newkey_from_oldkey,
               const list<MyNewTwoViewPointPtr> & newpoint_list,
-              const list<MyTrackPointPtr> & trackpoint_list)
+              const list<MyTrackPointPtr> & trackpoint_list,
+              ros::Time time)
 {
   const Pose & T_oldkey_from_world
       = GET_MAP_ELEM(oldkey_id, vertex_table_).T_me_from_world;
@@ -155,6 +156,7 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
   v_newkey->own_id = newkey_id;
   v_newkey->T_me_from_world
       = T_newkey_from_oldkey*T_oldkey_from_world;
+  v_newkey->time = time;
 
   IntTable neighborid_to_strength;
 
@@ -255,7 +257,7 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
 
 template <typename Pose, typename Cam, typename Proj, int ObsDim>
 void SlamGraph<Pose,Cam,Proj,ObsDim>
-::addFirstKeyframe(int newkey_id)
+::addFirstKeyframe(int newkey_id, ros::Time time)
 {
   assert(vertex_table_.size()==0);
   assert(point_table_.size()==0);
@@ -263,6 +265,7 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
   VertexPtr v(new Vertex);
   v->T_me_from_world = Pose();
   v->own_id = newkey_id;
+  v->time = time;
 
   bool inserted = vertex_table_.insert(make_pair(v->own_id, v)).second;
   assert(inserted);

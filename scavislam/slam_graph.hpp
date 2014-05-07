@@ -18,6 +18,8 @@
 #ifndef SCAVISLAM_SLAM_GRAPH_H
 #define SCAVISLAM_SLAM_GRAPH_H
 
+#include <ros/time.h>
+
 #include "global.h"
 #include "data_structures.h"
 
@@ -91,6 +93,7 @@ public:
     bool fixed;                        // Fix vertex during optimization?
     typename ImageFeature<ObsDim>::Table  feature_table;
     Pose T_me_from_world;
+    ros::Time time;
 
   private: DISALLOW_COPY_AND_ASSIGN(Vertex)
     public: EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -434,7 +437,8 @@ public:
                               int newkey_id,
                               const Pose & T_newkey_from_oldkey,
                               const list<MyNewTwoViewPointPtr> & newpoint_list,
-                              const list<MyTrackPointPtr> & trackpoint_list);
+                              const list<MyTrackPointPtr> & trackpoint_list,
+                              ros::Time time);
     void
     registerKeyframes        (int root_id,
                               const Pose & T_newroot_from_w,
@@ -446,7 +450,7 @@ public:
                               const Pose & T_root_from_loop,
                               const list<MyTrackPointPtr> & trackpoint_list);
     void
-    addFirstKeyframe         (int newkey_id);
+    addFirstKeyframe         (int newkey_id, ros::Time time);
 
     Pose
     getRelativePose_1_from_2 (int id1, int id2) const;

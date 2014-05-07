@@ -1,4 +1,5 @@
 #include <opencv2/opencv.hpp>
+#include <ros/time.h>
 
 #ifdef SCAVISLAM_CUDA_SUPPORT
 #include <opencv2/gpu/gpu.hpp>
@@ -47,6 +48,7 @@ public:
   cv::Mat color_uint8;
   cv::Mat uint8;
   vector<cv::Mat> pyr_uint8;
+  ros::Time time;
 #ifdef SCAVISLAM_CUDA_SUPPORT
   cv::gpu::GpuMat gpu_uint8;
   vector<cv::gpu::GpuMat> gpu_pyr_float32;
