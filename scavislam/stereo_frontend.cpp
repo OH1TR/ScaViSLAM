@@ -560,8 +560,7 @@ void StereoFrontend
             vit!=neighborhood_->vertex_map.end();
             ++vit)
     {
-        ImageFeature<3>::Table feat_table
-            = GET_MAP_ELEM(vit->first, neighborhood_->vertex_map).feat_map;
+        ImageFeature<3>::Table feat_table = vit->second.feat_map;
         for (list<TrackPoint3Ptr>::const_iterator it = trackpoint_list.begin();
                 it!= trackpoint_list.end(); ++it)
         {
