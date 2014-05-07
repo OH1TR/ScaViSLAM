@@ -8,7 +8,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
 
 # SET (CMAKE_VERBOSE_MAKEFILE ON)
 
-SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse4.1 -g")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse4.1")
 
 SET(CUDA_NVCC_FLAGS  "-arch=sm_20" "--use_fast_math"
     "--ptxas-options=--verbose" "-keep"  )
