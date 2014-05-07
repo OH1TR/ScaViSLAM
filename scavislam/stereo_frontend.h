@@ -92,6 +92,8 @@ public:
           int new_keyframe_featureless_corners_thr;
           int use_n_levels_in_frontend;
           int ui_min_num_points;
+          int bm_window_size;
+          int stereo_preset;
           int num_disp16;
           int stereo_method;
           int stereo_iters;
@@ -108,6 +110,8 @@ public:
           use_n_levels_in_frontend=2;
           ui_min_num_points=20;
           num_disp16=2;
+          bm_window_size=17;
+          stereo_preset=0;
           stereo_method=2;
           stereo_iters=4;
           stereo_levels=4;

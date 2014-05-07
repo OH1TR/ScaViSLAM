@@ -695,7 +695,7 @@ calcDisparityGpu()
   {
     cv::StereoBM stereo_bm;
     stereo_bm.state->preFilterCap = 31;
-    stereo_bm.state->SADWindowSize = 7;
+    stereo_bm.state->SADWindowSize = params_.bm_window_size;
     stereo_bm.state->minDisparity = 0;
 
     stereo_bm.state->textureThreshold = 10;
@@ -721,8 +721,10 @@ calcDisparityGpu()
   }
   else if (params_.stereo_method==2)
   {
-    cv::gpu::StereoBM_GPU gpu_stereo_bm(cv::gpu::StereoBM_GPU::PREFILTER_XSOBEL,
-                                        num_disparities);
+    cv::gpu::StereoBM_GPU gpu_stereo_bm(params_.stereo_preset,
+                                        num_disparities,
+                                        params_.bm_window_size);
+
 
     gpu_stereo_bm(frame_data_->cur_left().gpu_uint8,
                   frame_data_->right.gpu_uint8,
