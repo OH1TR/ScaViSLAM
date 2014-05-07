@@ -454,7 +454,9 @@ void StereoFrontend
     calculateDistanceToNeighbors( point_stats, &min_dist, other_id, T_cur_from_other );
     calculateTrackCounts( trackpoint_list, point_stats);
     if( *other_id>=0 && *other_id!=actkey_id ) {
-        if( GET_MAP_ELEM( *other_id, point_stats->mutually_tracked_points ) < params_.switch_keyframe_conection_threshold ) {
+        if( IS_IN_SET(*other_id, point_stats->mutually_tracked_points )
+            && (GET_MAP_ELEM( *other_id, point_stats->mutually_tracked_points ) > params_.switch_keyframe_conection_threshold ))
+        {
             *switchKeyframe = true;
             return;
         }
