@@ -23,7 +23,7 @@ find_package(catkin REQUIRED
         pcl_ros
         Sophus
         VisionTools
-        Pangolin
+        pangolin
     )
 
 SET (OpenCV_DIR /usr/local/share/OpenCV)
@@ -48,7 +48,7 @@ catkin_package(
     CATKIN_DEPENDS
         VisionTools
         Sophus
-        Pangolin
+        pangolin
     DEPENDS
         CUDA
         OpenCV

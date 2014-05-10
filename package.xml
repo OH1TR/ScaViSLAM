@@ -13,11 +13,11 @@
 
     <buildtool_depend>catkin</buildtool_depend>
 
-    <build_depend>Pangolin</build_depend>
+    <build_depend>pangolin</build_depend>
     <build_depend>VisionTools</build_depend>
     <build_depend>Sophus</build_depend>
 
-    <run_depend>Pangolin</run_depend>
+    <run_depend>pangolin</run_depend>
     <run_depend>VisionTools</run_depend>
     <run_depend>Sophus</run_depend>
 
