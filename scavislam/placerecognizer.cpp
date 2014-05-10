@@ -28,6 +28,8 @@
 #include "ransac.hpp"
 
 #include <opencv2/core/eigen.hpp>
+
+#include <ros/console.h>
 // Thanks a lot to Adrien Angeli for all help and discussion concerning
 // place recognition using "bag of words".
 
@@ -401,7 +403,7 @@ void PlaceRecognizer
 
     Place new_loc;
     new_loc.keyframe_id = pr_data.keyframe_id;
-    std::cerr << "Adding place from keyframe " << new_loc.keyframe_id << std::endl;
+    ROS_DEBUG_STREAM( "Adding place from keyframe " << new_loc.keyframe_id);
 
     new_loc.image = pr_data.keyframe.pyr.at(0);
     computeSURFFeatures(pr_data, new_loc);
@@ -426,7 +428,7 @@ void PlaceRecognizer
             float v = it->second;
             if (v>2.)
             {
-                std::cerr << "Word match detected" << std::endl;
+                ROS_DEBUG("Word match detected");
                 const Place & matched_loc = GET_MAP_ELEM(it->first, location_map_);
                 DetectedLoop loop;
                 vector<cv::DMatch > matches;
@@ -438,12 +440,12 @@ void PlaceRecognizer
                 {
                     if(pr_data.keyframe_id - loop.loop_keyframe_id > 1000) {
                         drawMatches(new_loc, matched_loc, matches);
-                        std::cerr << "Loop translation: " << loop.T_query_from_loop.translation().transpose() << std::endl;
-                        std::cerr << "Loop quaternion: " << loop.T_query_from_loop.so3().unit_quaternion().coeffs().transpose() << std::endl;
+                        ROS_INFO_STREAM("Loop translation: " << loop.T_query_from_loop.translation().transpose() );
+                        ROS_INFO_STREAM("Loop quaternion: " << loop.T_query_from_loop.so3().unit_quaternion().coeffs().transpose());
                     }
                     monitor.addLoop(loop);
                 } else {
-                    std::cerr << "Geometric check failed " << inliers << " frame " << loop.loop_keyframe_id << std::endl;
+                    ROS_INFO_STREAM("Geometric check failed " << inlier_count << " frame " << loop.loop_keyframe_id);
                 }
             }
         }
@@ -456,7 +458,7 @@ void PlaceRecognizer
 {
     Place new_loc;
     new_loc.keyframe_id = pr_data.keyframe_id;
-    std::cerr << "Querying place from keyframe " << new_loc.keyframe_id << std::endl;
+    ROS_INFO_STREAM("Querying place from keyframe " << new_loc.keyframe_id );
 
     new_loc.image = pr_data.keyframe.pyr.at(0);
     computeSURFFeatures(pr_data, new_loc);
@@ -484,7 +486,7 @@ void PlaceRecognizer
     }
     if (max_score>2.)
     {
-        std::cerr << "Word match detected" << std::endl;
+        ROS_DEBUG("Word match detected");
         best_match = max_score_idx;
         const Place & matched_loc = GET_MAP_ELEM(best_match, location_map_);
         DetectedLoop loop;

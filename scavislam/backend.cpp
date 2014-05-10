@@ -217,7 +217,7 @@ void Backend
       {
         if(globalLoopClosure(loop))
         {
-          std::cerr << "Loop closure added" << std::endl;
+          ROS_INFO( "Loop closure added" );
           monitor.pushClosedLoop(loop);
           if(graph_.prepareForOptimization(loop.query_keyframe_id,
                                            loop.loop_keyframe_id))
@@ -225,11 +225,11 @@ void Backend
         }
       } else {
           if(!loop_not_in_graph)
-              std::cerr << "Existing loop found" << std::endl;
+              ROS_INFO("Existing loop found");
           if(loop_keyframe_not_in_graph)
-              std::cerr << "loop keyframe " << loop.loop_keyframe_id << " not in graph" << std::endl;
+              ROS_INFO_STREAM( "loop keyframe " << loop.loop_keyframe_id << " not in graph" );
           if(!loop_keyframe_in_outer_window)
-              std::cerr << "Loop keyframe " << loop.loop_keyframe_id << " in inner window" << std::endl;
+              ROS_INFO_STREAM( "Loop keyframe " << loop.loop_keyframe_id << " in inner window" );
       }
     }
 
@@ -439,11 +439,11 @@ void Backend
       < graph_.vertex_table().size();
 
   if(detect) {
-      std::cerr << "doing loop detection ";
+      ROS_DEBUG( "doing loop detection" );
   } else {
-      std::cerr << "no loop detection ";
+      ROS_DEBUG( "no loop detection " );
   }
-  std::cerr <<  pr_data.exclude_set.size() << " " << graph_.vertex_table().size() << std::endl;
+  ROS_DEBUG_STREAM( "exclude set: " << pr_data.exclude_set.size() << " " << graph_.vertex_table().size());
 
   pr_data.do_loop_detection = detect;
   pr_data.keyframe = to_optimiser->kf;
@@ -772,7 +772,7 @@ bool Backend
                                      track_data);
 
   if (track_data->obs_list.size()<COVIS_THR) {
-      std::cerr << "Not enough covisible points: " << track_data->obs_list.size() << std::endl;
+    ROS_ERROR_STREAM("Not enough covisible points: " << track_data->obs_list.size());
     return false;
   }
 
@@ -803,7 +803,7 @@ bool Backend
                               T_newroot_from_oldroot,
                               &(track_data->point_list));
   if (track_data->obs_list.size()<COVIS_THR) {
-      std::cerr << "Secondary alignement failed" << std::endl;
+      ROS_ERROR("Secondary alignement failed");
     return false;
   }
 
@@ -858,7 +858,7 @@ bool Backend
 ::globalLoopClosure(const DetectedLoop & loop)
 {
 
-    std::cerr << "Attempting global closure." << std::endl;
+    ROS_INFO( "Attempting global closure." );
 
   const Frame & loop_frame
       = GET_MAP_ELEM(loop.loop_keyframe_id, keyframe_map_);
@@ -928,7 +928,7 @@ bool Backend
   if (matchAndAlign(loop_frame, loop.loop_keyframe_id, vertex_table,
                     candidate_point_list,
                     &T_newloop_from_oldloop, &track_data) == false) {
-      std::cerr << "Could not align recognized frame" << std::endl;
+      ROS_ERROR( "Could not align recognized frame");
       return false;
   }
 
@@ -982,7 +982,7 @@ bool Backend
     }
   }
   if (trackpoint_list.size()<COVIS_THR) {
-      std::cerr << "Recognized frame has too few tracked points " << trackpoint_list.size() << " " << COVIS_THR << std::endl;
+      ROS_ERROR_STREAM("Recognized frame has too few tracked points " << trackpoint_list.size() << " " << COVIS_THR );
       return false;
   }
 
@@ -995,12 +995,12 @@ bool Backend
   distribution_count += (num_left<COVIS_THR/2)  ?1:0;
   distribution_count += (num_right<COVIS_THR/2) ?1:0;
   if (distribution_count < 2) {
-      std::cerr << "Recognized points are not well distributed " <<
+      ROS_ERROR_STREAM("Recognized points are not well distributed " <<
           "lower " << num_lower << " " <<
           "upper " << num_upper << " " <<
           "left  " << num_left << " " <<
           "right " << num_right << " " <<
-          "need " << COVIS_THR/2 << std::endl;
+          "need " << COVIS_THR/2);
     return false;
   }
 

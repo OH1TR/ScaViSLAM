@@ -173,7 +173,7 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
   // TODO: THIS  SHOULD BE CHECKED INSIDE OF THE FRONTEND
     if (strength_to_oldkey<covis_thr_)
   {
-    std::cerr << "Resetting strength_to_oldkey: " << strength_to_oldkey << " " << covis_thr_ << std::endl;
+    ROS_ERROR_STREAM( "Resetting strength_to_oldkey: " << strength_to_oldkey << " " << covis_thr_ );
     strength_to_oldkey = covis_thr_;
   }
 
@@ -438,7 +438,7 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
     if (strength>=covis_thr_)
     {
       int other_id = it->first;
-      std::cerr << "Metric edge added " << v_newkey->own_id << " to " << other_id << std::endl;
+      ROS_INFO_STREAM( "Metric edge added " << v_newkey->own_id << " to " << other_id );
 
       Vertex & v_other = GET_MAP_ELEM_REF(other_id, &vertex_table_);
       //      if (is_loop_closure_edge)
@@ -506,7 +506,7 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
     typename PointTable::const_iterator find_it
         = point_table_.find(tp->global_id);
     if (find_it==point_table_.end()) {
-      cerr << "non-existent point " << tp->global_id << std::endl;
+      ROS_ERROR_STREAM( "non-existent point " << tp->global_id );
       continue;
     }
 
@@ -552,7 +552,7 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
                   && GET_MAP_ELEM(frame_id, num_left)>=covis_thr_/2
                   && IS_IN_SET(frame_id, num_right)
                   && GET_MAP_ELEM(frame_id, num_right)>=covis_thr_/2) {
-              std::cerr << "in all corners frame_id " << frame_id << std::endl;
+              ROS_DEBUG_STREAM("in all corners frame_id " << frame_id );
               continue;
           }
       }
@@ -845,7 +845,7 @@ void SlamGraph<Pose,Cam,Proj,ObsDim>
   int visibility_strength = depth_set.size();
   if(visibility_strength<covis_thr_)
   {
-    cerr << "ATTENTIOn, THIS SHOULD NEVER HAPPEN! " << visibility_strength << " " << covis_thr_ << " " << nf << endl;
+    ROS_ERROR_STREAM( "ATTENTIOn, THIS SHOULD NEVER HAPPEN! " << visibility_strength << " " << covis_thr_ << " " << nf );
   }
 
   double median_depth = median(depth_set);

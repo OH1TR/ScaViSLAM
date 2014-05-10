@@ -182,8 +182,8 @@ bool StereoFrontend
 #else
   tracker_.denseTrackingCpu(&T_cur_from_actkey_);
 #endif
-  cerr << "T_cur_from_actkey.translation: " << T_cur_from_actkey_.translation().transpose() << std::endl;
-  cerr << "T_cur_from_actkey.rotation: " << T_cur_from_actkey_.so3().log().transpose() << std::endl;
+  ROS_DEBUG_STREAM("T_cur_from_actkey.translation: " << T_cur_from_actkey_.translation().transpose() );
+  ROS_DEBUG_STREAM("T_cur_from_actkey.rotation: " << T_cur_from_actkey_.so3().log().transpose() );
   per_mon_->stop("dense tracking");
 
   per_mon_->start("stereo");
@@ -230,7 +230,7 @@ bool StereoFrontend
                                                &track_data,
                                                &num_new_feat_matched);
   per_mon_->stop("match");
-  std::cerr << "keyframe " << actkey_id << " matched " << num_new_feat_matched << " new features of "  << track_data.obs_list.size() << "."<< std::endl;
+  ROS_DEBUG_STREAM("keyframe " << actkey_id << " matched " << num_new_feat_matched << " new features of "  << track_data.obs_list.size() << "." );
 
   if (matched_enough_features==false)
     return false;
@@ -268,7 +268,7 @@ bool StereoFrontend
 
   if ( switchKeyframe )
   {
-    std::cerr << "Switching keyframe " << actkey_id << " to " << other_id << std::endl;
+    ROS_INFO_STREAM( "Switching keyframe " << actkey_id << " to " << other_id );
     actkey_id = other_id;
     T_cur_from_actkey_ = T_cur_from_other;
   }
@@ -429,10 +429,10 @@ void StereoFrontend
   keyframe_map.insert(make_pair(actkey_id,kf));
   keyframe_id2num.insert(make_pair(actkey_id, keyframe_id2num.size()));
   keyframe_num2id.push_back(actkey_id);
-  std::cerr << "Pushing new keyframe " <<
+  ROS_DEBUG_STREAM("Pushing new keyframe " <<
       to_optimizer->oldkey_id << "->" << to_optimizer->newkey_id << " " <<
       "with " << to_optimizer->track_point_list.size() << " track points and " <<
-      "and " << to_optimizer->new_point_list.size() << " new points." << std::endl;
+      "and " << to_optimizer->new_point_list.size() << " new points." );
   to_optimizer_stack.push(to_optimizer);
 
   T_cur_from_actkey_ = SE3();
@@ -480,21 +480,21 @@ void StereoFrontend
         || translated_enough
         || points_moved_enough;
     if(*dropKeyframe && !connection_too_weak ) {
-        std::cerr << "New keyframe: features " << running_out_of_features
+        ROS_DEBUG_STREAM("New keyframe: features " << running_out_of_features
             << ", translation " << translated_enough
             << ", points " << points_moved_enough
             << ", strength_to_neighbor[actkey_id] " << actstrength
             << ", covis_threshold " << params_.covis_threshold
-            << "." << std::endl;
+            << "." );
     }
     if( *dropKeyframe && connection_too_weak ) {
-        cerr << "Would like to add keyframe, but not enough points found "  << actstrength << "<" << params_.covis_threshold << std::endl;
+        ROS_ERROR_STREAM("Would like to add keyframe, but not enough points found "  << actstrength << "<" << params_.covis_threshold );
         int strongest=-1;
         int max_strength = 0;
         for( tr1::unordered_map<int,int>::const_iterator it=point_stats->strength_to_neighbor.begin();
                 it!=point_stats->strength_to_neighbor.end();
                 it++){
-            cerr << "Strength to " << it->first << " = " << it->second << std::endl;
+            ROS_ERROR_STREAM("Strength to " << it->first << " = " << it->second );
             if( it->second > max_strength ) {
                 strongest = it->first;
                 const SE3d & T_act_from_w
@@ -615,7 +615,7 @@ bool StereoFrontend
 
   if (closest!=-1 )
   {
-    std::cerr << "Closer keyframe exists" << std::endl;
+    ROS_DEBUG("Closer keyframe exists");
     ImageFeature<3>::Table feat_table
         = GET_MAP_ELEM(closest, neighborhood_->vertex_map).feat_map;
 
@@ -631,7 +631,7 @@ bool StereoFrontend
       }
     }
 
-    std::cerr << "Count is " << count << std::endl;
+    ROS_DEBUG_STREAM("Count is " << count );
     //TODO: add more sophisticated check
     if (count>100)
     {
@@ -665,19 +665,19 @@ bool StereoFrontend
       || translated_enough
       || points_moved_enough;
   if(drop && !connection_too_weak ) {
-      std::cerr << "New keyframe: features " << running_out_of_features
+      ROS_DEBUG_STREAM("New keyframe: features " << running_out_of_features
           << ", translation " << translated_enough
           << ", points " << points_moved_enough
           << ", strength_to_neighbor[actkey_id] " << actstrength
           << ", covis_threshold " << params_.covis_threshold
-          << "." << std::endl;
+          << "." );
   }
   if( drop && connection_too_weak ) {
-      cerr << "Would like to add keyframe, but not enough points found "  << actstrength << "<" << params_.covis_threshold << std::endl;
+      ROS_ERROR_STREAM("Would like to add keyframe, but not enough points found "  << actstrength << "<" << params_.covis_threshold );
       for( tr1::unordered_map<int,int>::const_iterator it=point_stats.strength_to_neighbor.begin();
               it!=point_stats.strength_to_neighbor.end();
               it++){
-          cerr << "Strength to " << it->first << " = " << it->second << std::endl;
+          ROS_ERROR_STREAM( "Strength to " << it->first << " = " << it->second );
       }
   }
 
@@ -1194,7 +1194,7 @@ bool StereoFrontend
                                      track_data);
 
   int sz = track_data->obs_list.size();
-    std::cerr << "new points from actkey_id " << actkey_id << ": " << sz << std::endl;
+    ROS_DEBUG_STREAM("new points from actkey_id " << actkey_id << ": " << sz );
 
   for (multimap<int,int>::const_iterator it
        = active_vertex.strength_to_neighbors.begin();
@@ -1218,7 +1218,7 @@ bool StereoFrontend
                                        10,
                                        track_data);
 
-    std::cerr << "new points from neighbor " << it->second << ": " << (track_data->obs_list.size()-sz) << std::endl;
+    ROS_DEBUG_STREAM("new points from neighbor " << it->second << ": " << (track_data->obs_list.size()-sz) );
     sz=track_data->obs_list.size();
   }
   *num_new_feat_matched  += track_data->obs_list.size();
@@ -1244,7 +1244,7 @@ bool StereoFrontend
                                      track_data);
 
 
-  std::cerr << "tracked points: " << (track_data->obs_list.size()-sz) << std::endl;
+  ROS_DEBUG_STREAM("tracked points: " << (track_data->obs_list.size()-sz) );
   if (track_data->obs_list.size()<20)
   {
     return false;

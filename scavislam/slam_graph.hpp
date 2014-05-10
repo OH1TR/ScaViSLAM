@@ -25,6 +25,8 @@
 
 #include "g2o_types/anchored_points.h"
 
+#include <ros/console.h>
+
 namespace g2o
 {
 class SparseOptimizer;
@@ -351,7 +353,7 @@ public:
         }
         if (inserted==false)
         {
-          cerr << id1 << " " << id2 << endl;
+          ROS_ERROR_STREAM( "Failed to insert edge " << id1 << " " << id2 );
         }
         assert(inserted);
       }
