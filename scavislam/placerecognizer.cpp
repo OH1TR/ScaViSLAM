@@ -220,7 +220,7 @@ void PlaceRecognizer
   }
 }
 
-int PlaceRecognizer
+cv::Mat PlaceRecognizer
 ::geometricCheck(const Place & query,
                  const Place & train,
                  DetectedLoop & loop,
@@ -235,12 +235,12 @@ int PlaceRecognizer
   loop.query_keyframe_id = query.keyframe_id;
   loop.loop_keyframe_id = train.keyframe_id;
 
-  cv::Mat new_pts(matches.size(), 1, CV_64FC2);
-  cv::Mat matched_pts(matches.size(), 1, CV_64FC2);
+  cv::Mat new_pts(matches.size(), 1, CV_32FC2);
+  cv::Mat matched_pts(matches.size(), 1, CV_32FC2);
   for(size_t row=0;row<matches.size();row++){
       cv::DMatch m=matches.at(row);
-      new_pts.at<cv::Vec2d>(row) = cv::Vec2d(query.uvu_0_vec.at(m.queryIdx)(0), query.uvu_0_vec.at(m.queryIdx)(1));
-      matched_pts.at<cv::Vec2d>(row) = cv::Vec2d(train.uvu_0_vec.at(m.trainIdx)(0), train.uvu_0_vec.at(m.trainIdx)(1));
+      new_pts.at<cv::Point2f>(row) = query.keypoints.at(m.queryIdx).pt;
+      matched_pts.at<cv::Point2f>(row) = train.keypoints.at(m.trainIdx).pt;
   }
   cv::Mat status;
   cv::Mat cvF=cv::findFundamentalMat( new_pts, matched_pts, CV_FM_RANSAC, 1., 0.99, status);
@@ -259,7 +259,7 @@ int PlaceRecognizer
   loop.T_query_from_loop.translation() << Tcross(2,1), Tcross(0,2), Tcross(1,0);
 
 
-  return cv::countNonZero( status );
+  return status;
 }
 
 void PlaceRecognizer
@@ -267,39 +267,16 @@ void PlaceRecognizer
 {
   //todo: adpative SURF thr
   double surf_thr  = 600;
-  vector<cv::KeyPoint> keypoints;
-  vector<cv::KeyPoint> keypoints_with_depth;
-  cv::SurfFeatureDetector surf(surf_thr, 2);
-  surf.detect(new_loc.image,keypoints);
+  cv::SurfFeatureDetector surf(surf_thr, 4, 2, false);
+  cv::Mat image = pr_data.keyframe.pyr.at(0);
+  surf.detect(image,new_loc.keypoints);
 
+  surf.compute(image,
+               new_loc.keypoints,
+               new_loc.descriptors);
 
-  for (unsigned i=0; i<keypoints.size(); ++i)
-  {
-    const cv::KeyPoint & kp = keypoints[i];
+  ROS_DEBUG_STREAM( "Found " << new_loc.descriptors.rows << " SURF points" );
 
-    double disp = interpolateDisparity(pr_data.keyframe.disp,
-                                       Vector2i(round(kp.pt.x),
-                                                round(kp.pt.y)),
-                                       0);
-    if (disp>0)
-    {
-      Vector3d uvu(kp.pt.x,kp.pt.y,kp.pt.x-disp);
-
-      new_loc.uvu_0_vec.push_back(uvu);
-      new_loc.xyz_vec.push_back(stereo_cam_.unmap_uvu(uvu));
-      keypoints_with_depth.push_back(kp);
-    }
-  }
-
-  cv::SurfDescriptorExtractor surf_ext(2, 4, 2, false);
-  surf_ext.compute(pr_data.keyframe.pyr.at(0),
-                   keypoints_with_depth,
-                   new_loc.descriptors);
-
-  std::cerr << "Found " << new_loc.descriptors.rows << " SURF points" << std::endl;
-
-  assert(new_loc.uvu_0_vec.size()==keypoints_with_depth.size());
-  // Make sure SURF extractor did not remove keypoint from list!
 }
 
 void PlaceRecognizer
@@ -360,16 +337,8 @@ void PlaceRecognizer
   }
 }
 
-cv::KeyPoint to_kp(const Vector3d &uvu)
-{
-    cv::KeyPoint kp;
-    kp.pt.x=uvu(0);
-    kp.pt.y=uvu(1);
-    return kp;
-}
-
 void
-drawMatches( const Place & new_loc, const Place & matched_loc, const vector<cv::DMatch> & matches)
+drawMatches( const Place & new_loc, const Place & matched_loc, const vector<cv::DMatch> & matches, const cv::Mat inliers)
 {
     cv::Mat new_image = new_loc.image;
     cv::Mat matched_image = matched_loc.image;
@@ -377,19 +346,7 @@ drawMatches( const Place & new_loc, const Place & matched_loc, const vector<cv::
     int width = new_image.cols + matched_image.cols;
     cv::Mat disp(height, width, CV_8UC3);
 
-    vector<cv::KeyPoint> new_kp;
-    new_kp.resize(new_loc.uvu_0_vec.size());
-    transform(new_loc.uvu_0_vec.begin(), new_loc.uvu_0_vec.end(), new_kp.begin(), to_kp);
-    vector<cv::KeyPoint> matched_kp;
-    matched_kp.resize(matched_loc.uvu_0_vec.size());
-    transform(matched_loc.uvu_0_vec.begin(), matched_loc.uvu_0_vec.end(), matched_kp.begin(), to_kp);
-
-    vector<char> mask;
-    mask.resize(matches.size());
-    for(size_t count=0; count<mask.size(); count++)
-        mask.at(count) = (count%5)==0;
-
-    cv::drawMatches(new_image, new_kp, matched_image, matched_kp, matches, disp, cv::Scalar::all(-1), cv::Scalar::all(-1), mask);
+    cv::drawMatches(new_image, new_loc.keypoints, matched_image, matched_loc.keypoints, matches, disp, cv::Scalar::all(-1), cv::Scalar::all(-1), inliers);
     cv::imshow("Matches", disp);
     cv::waitKey(1);
 }
@@ -432,14 +389,15 @@ void PlaceRecognizer
                 const Place & matched_loc = GET_MAP_ELEM(it->first, location_map_);
                 DetectedLoop loop;
                 vector<cv::DMatch > matches;
-                int inliers = geometricCheck(new_loc,
+                cv::Mat inliers = geometricCheck(new_loc,
                         matched_loc,
                         loop,
                         matches);
-                if (inliers>100)
+                int inlier_count = cv::countNonZero(inliers);
+                if (inlier_count>100)
                 {
                     if(pr_data.keyframe_id - loop.loop_keyframe_id > 1000) {
-                        drawMatches(new_loc, matched_loc, matches);
+                        drawMatches(new_loc, matched_loc, matches, inliers);
                         ROS_INFO_STREAM("Loop translation: " << loop.T_query_from_loop.translation().transpose() );
                         ROS_INFO_STREAM("Loop quaternion: " << loop.T_query_from_loop.so3().unit_quaternion().coeffs().transpose());
                     }
@@ -491,11 +449,12 @@ void PlaceRecognizer
         const Place & matched_loc = GET_MAP_ELEM(best_match, location_map_);
         DetectedLoop loop;
         vector<cv::DMatch > matches;
-        int inliers = geometricCheck(new_loc,
+        cv::Mat inliers = geometricCheck(new_loc,
                                      matched_loc,
                                      loop,
                                      matches);
-        if (inliers>150)
+        int inlier_count = cv::countNonZero( inliers );
+        if (inlier_count>150)
         {
             monitor.queryResponse(loop);
         }

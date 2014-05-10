@@ -85,8 +85,7 @@ private:
 struct Place
 {
   Place() : number_of_words(0) {}
-  ALIGNED<Vector3d>::vector uvu_0_vec;
-  ALIGNED<Vector3d>::vector xyz_vec;
+  std::vector<cv::KeyPoint> keypoints;
   cv::Mat descriptors;
   cv::Mat image;
   int number_of_words;
@@ -124,7 +123,7 @@ private:
                         tr1::unordered_map<int,float>& location_stats,
                         bool update);
 
-  int
+  cv::Mat
   geometricCheck             (const Place & query,
                               const Place & train,
                               DetectedLoop& loop,
