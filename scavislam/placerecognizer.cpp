@@ -416,7 +416,7 @@ void PlaceRecognizer
 {
     Place new_loc;
     new_loc.keyframe_id = pr_data.keyframe_id;
-    ROS_INFO_STREAM("Querying place from keyframe " << new_loc.keyframe_id );
+    ROS_DEBUG_STREAM("Querying place from keyframe " << new_loc.keyframe_id );
 
     new_loc.image = pr_data.keyframe.pyr.at(0);
     computeSURFFeatures(pr_data, new_loc);
