@@ -296,9 +296,16 @@ bool StereoFrontend
 void StereoFrontend
 ::currentPose(SE3d& T_cur) const
 {
-    const SE3d& T_act_from_w =
-      GET_MAP_ELEM(actkey_id, neighborhood_->vertex_map).T_me_from_w;
-    T_cur = (T_cur_from_actkey_*T_act_from_w).inverse();
+    if( IS_IN_SET( actkey_id, neighborhood_->vertex_map) )
+    {
+        const SE3d& T_act_from_w =
+            GET_MAP_ELEM(actkey_id, neighborhood_->vertex_map).T_me_from_w;
+        T_cur = (T_cur_from_actkey_*T_act_from_w).inverse();
+    }
+    else
+    {
+        T_cur = SE3d( Eigen::Quaterniond::Identity(), Eigen::Vector3d::Zero() );
+    }
 }
 
 void StereoFrontend
